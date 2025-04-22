@@ -19,7 +19,7 @@ def add_40_weeks_explanation(input_data):
         explanation += f"Because the patient's cycle length is 28 days, we do not make any changes to the date. Hence, the patient's estimated due date is {future_date.strftime('%m/%d/%Y')}. \n"
     elif cycle_length < 28:
         cycle_length_gap = abs(cycle_length - 28)
-        future_date = future_date + timedelta(days=cycle_length_gap)
+        future_date = future_date - timedelta(days=cycle_length_gap)
         explanation += f"Because the patient's cycle length is {abs(cycle_length)} days, this means that we must subtract {cycle_length_gap} days from the patient's estimate due date. Hence, the patient's estimated due date is {future_date.strftime('%m/%d/%Y')}. \n"
     elif cycle_length > 28:
         cycle_length_gap = abs(cycle_length - 28)
