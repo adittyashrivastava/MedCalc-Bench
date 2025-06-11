@@ -12,6 +12,10 @@ import numpy as np
 import ast
 from table_stats import compute_overall_accuracy
 
+# Import attention_viz for attention analysis
+from attention_viz import AttentionVisualizer, AttentionExtractor, AttentionAnalyzer
+from attention_viz.utils.helpers import load_model_and_tokenizer
+
 
 def zero_shot(note, question):
     system_msg = 'You are a helpful assistant for calculating a score for a given patient note. Please think step-by-step to solve the question and then generate the required score. Your output should only contain a JSON dict formatted as {"step_by_step_thinking": str(your_step_by_step_thinking_procress_to_solve_the_question), "answer": str(short_and_direct_answer_of_the_question)}.'
@@ -151,16 +155,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Parse arguments')
     parser.add_argument('--model', type=str, help='Specify which model you are using. Options are OpenAI/GPT-4, OpenAI/GPT-3.5-turbo, mistralai/Mistral-7B-Instruct-v0.2, mistralai/Mixtral-8x7B-Instruct-v0.1, meta-llama/Meta-Llama-3-8B-Instruct, meta-llama/Meta-Llama-3-70B-Instruct, epfl-llm/meditron-70b, axiong/PMC_LLaMA_13B')
     parser.add_argument('--prompt', type=str, help='Specify prompt type. Options are direct_answer, zero_shot, one_shot')
+    parser.add_argument('--enable_attention_analysis', action='store_true', help='Enable attention visualization and analysis for each entry')
 
     args = parser.parse_args()
 
     model_name = args.model
     prompt_style = args.prompt
+    enable_attention = args.enable_attention_analysis
 
     output_path = f"{model_name.replace('/', '_')}_{prompt_style}.jsonl"
 
     if not os.path.exists("outputs"):
         os.makedirs("outputs")
+
+    # Create attention analysis output directory if needed
+    if enable_attention:
+        attention_output_dir = os.path.join("outputs", "attention_analysis")
+        os.makedirs(attention_output_dir, exist_ok=True)
+        print(f"🔍 Attention analysis enabled. Outputs will be saved to: {attention_output_dir}")
 
     if not os.path.exists(os.path.join("outputs", output_path)):
         existing = None
@@ -175,6 +187,27 @@ if __name__ == "__main__":
         one_shot = one_shot_meditron
 
     llm = LLMInference(llm_name=model_name)
+
+    # Initialize attention analysis components if enabled
+    attention_visualizer = None
+    attention_analyzer = None
+    if enable_attention:
+        try:
+            print("🔧 Initializing attention analysis components...")
+            # Get model and tokenizer from LLMInference object
+            model = llm.model
+            tokenizer = llm.tokenizer
+
+            # Initialize attention visualization components
+            attention_visualizer = AttentionVisualizer(model, tokenizer)
+            attention_extractor = AttentionExtractor(model, tokenizer)
+            attention_analyzer = AttentionAnalyzer(attention_extractor)
+
+            print("✅ Attention analysis components initialized successfully")
+        except Exception as e:
+            print(f"⚠️  Failed to initialize attention analysis: {e}")
+            print("Continuing without attention analysis...")
+            enable_attention = False
 
     with open("one_shot_finalized_explanation.json", "r") as file:
         one_shot_json = json.load(file)
@@ -222,6 +255,149 @@ if __name__ == "__main__":
         answer = llm.answer(messages)
         print(answer)
 
+        # Perform attention analysis if enabled
+        attention_data = {}
+        if enable_attention and attention_visualizer is not None:
+            try:
+                print(f"🔍 Performing attention analysis for Calculator {calculator_id}, Note {note_id}...")
+
+                # Create organized output directory for this specific entry
+                entry_dir = os.path.join(attention_output_dir, f"calc_{calculator_id}_note_{note_id}")
+                os.makedirs(entry_dir, exist_ok=True)
+
+                # Combine the full input text for attention analysis
+                full_input_text = f"System: {system}\n\nUser: {user}"
+
+                # 1. Basic attention visualization
+                try:
+                    attention_visualizer.visualize_attention(
+                        text=full_input_text,
+                        layer=6,  # Middle layer
+                        head=4,   # Specific head
+                        save_path=os.path.join(entry_dir, "basic_attention.html"),
+                        interactive=True
+                    )
+                    attention_data["basic_visualization"] = "basic_attention.html"
+                except Exception as e:
+                    print(f"Basic attention visualization failed: {e}")
+
+                # 2. Attention heatmap
+                try:
+                    attention_visualizer.plot_attention_heatmap(
+                        text=full_input_text,
+                        layer=6,
+                        head=4,
+                        title=f"Medical Calculation - Calculator {calculator_id}",
+                        save_path=os.path.join(entry_dir, "attention_heatmap.png")
+                    )
+                    attention_data["heatmap"] = "attention_heatmap.png"
+                except Exception as e:
+                    print(f"Attention heatmap failed: {e}")
+
+                # 3. Layer comparison
+                try:
+                    attention_visualizer.compare_layers(
+                        text=full_input_text,
+                        layers=[0, 3, 6, 9],  # Early, middle, and late layers
+                        save_path=os.path.join(entry_dir, "layer_comparison.png")
+                    )
+                    attention_data["layer_comparison"] = "layer_comparison.png"
+                except Exception as e:
+                    print(f"Layer comparison failed: {e}")
+
+                # 4. Get attention statistics
+                try:
+                    stats = attention_visualizer.get_attention_stats(full_input_text)
+                    attention_data["statistics"] = {
+                        "overall_entropy": stats.get('overall_stats', {}).get('entropy', 0),
+                        "overall_sparsity": stats.get('overall_stats', {}).get('sparsity', 0),
+                        "max_attention": stats.get('overall_stats', {}).get('max_attention', 0)
+                    }
+                except Exception as e:
+                    print(f"Attention statistics failed: {e}")
+
+                # 5. Advanced analysis with AttentionAnalyzer
+                try:
+                    pos_analysis = attention_analyzer.analyze_positional_attention(full_input_text, layer=6)
+                    attention_data["positional_analysis"] = {
+                        "attention_pattern_type": pos_analysis.get("aggregate_analysis", {}).get("attention_pattern_type", "unknown"),
+                        "local_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_local_ratio", 0),
+                        "global_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_global_ratio", 0)
+                    }
+                except Exception as e:
+                    print(f"Positional analysis failed: {e}")
+
+                # 6. Export attention data
+                try:
+                    attention_visualizer.export_attention_data(
+                        text=full_input_text,
+                        format="json",
+                        save_path=os.path.join(entry_dir, "attention_data.json")
+                    )
+                    attention_data["raw_data"] = "attention_data.json"
+                except Exception as e:
+                    print(f"Attention data export failed: {e}")
+
+                # 7. Generate comprehensive report
+                try:
+                    attention_analyzer.export_analysis_report(
+                        text=full_input_text,
+                        save_path=os.path.join(entry_dir, "attention_report.md")
+                    )
+                    attention_data["analysis_report"] = "attention_report.md"
+                except Exception as e:
+                    print(f"Analysis report failed: {e}")
+
+                # 8. Head specialization analysis (with multiple related texts)
+                try:
+                    related_texts = [
+                        full_input_text,
+                        f"Patient Note: {patient_note}",
+                        f"Question: {question}",
+                        f"Medical calculation for {row.get('Calculator Name', 'Unknown Calculator')}"
+                    ]
+
+                    head_analysis = attention_visualizer.analyze_head_specialization(
+                        texts=related_texts,
+                        layer=6
+                    )
+
+                    attention_visualizer.plot_head_specialization(
+                        head_analysis,
+                        save_path=os.path.join(entry_dir, "head_specialization.png")
+                    )
+                    attention_data["head_specialization"] = "head_specialization.png"
+                except Exception as e:
+                    print(f"Head specialization analysis failed: {e}")
+
+                # 9. Save attention analysis summary as JSON
+                try:
+                    attention_summary = {
+                        "calculator_id": calculator_id,
+                        "note_id": note_id,
+                        "calculator_name": row.get("Calculator Name", "Unknown"),
+                        "category": row.get("Category", "Unknown"),
+                        "model_name": model_name,
+                        "prompt_style": prompt_style,
+                        "input_length": len(full_input_text),
+                        "patient_note_length": len(patient_note),
+                        "question_length": len(question),
+                        "attention_files": attention_data,
+                        "timestamp": pd.Timestamp.now().isoformat()
+                    }
+
+                    with open(os.path.join(entry_dir, "attention_summary.json"), "w") as f:
+                        json.dump(attention_summary, f, indent=2)
+
+                    print(f"Attention analysis completed for Calculator {calculator_id}, Note {note_id}")
+                    print(f"Files saved to: {entry_dir}")
+
+                except Exception as e:
+                    print(f"Attention summary save failed: {e}")
+
+            except Exception as e:
+                print(f"Attention analysis failed for Calculator {calculator_id}, Note {note_id}: {e}")
+
         try:
             answer_value, explanation = extract_answer(answer, int(calculator_id))
 
@@ -246,6 +422,11 @@ if __name__ == "__main__":
                 "Ground Truth Explanation": row["Ground Truth Explanation"],
                 "Result": status
             }
+
+            # Add attention analysis info to outputs if available
+            if enable_attention and attention_data:
+                outputs["Attention_Analysis_Directory"] = f"attention_analysis/calc_{calculator_id}_note_{note_id}"
+                outputs["Attention_Files_Generated"] = list(attention_data.keys())
 
             if prompt_style == "direct_answer":
                 outputs["LLM Explanation"] = "N/A"
@@ -277,6 +458,19 @@ if __name__ == "__main__":
             f.write(json.dumps(outputs) + "\n")
 
     compute_overall_accuracy(output_path, model_name, prompt_style)
+
+    # Print attention analysis summary if enabled
+    if enable_attention:
+        print(f"\nProcessing completed with attention analysis!")
+        print(fAttention visualizations saved to: {attention_output_dir}")
+        print("Generated files for each entry:")
+        print("   - basic_attention.html (interactive visualization)")
+        print("   - attention_heatmap.png (static heatmap)")
+        print("   - layer_comparison.png (multi-layer comparison)")
+        print("   - attention_data.json (raw attention weights)")
+        print("   - attention_report.md (comprehensive analysis)")
+        print("   - head_specialization.png (head analysis)")
+        print("   - attention_summary.json (metadata and file list)")
 
 
 
