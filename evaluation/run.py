@@ -17,7 +17,7 @@ def zero_shot(note, question):
     system_msg = 'You are a helpful assistant for calculating a score for a given patient note. Please think step-by-step to solve the question and then generate the required score. Your output should only contain a JSON dict formatted as {"step_by_step_thinking": str(your_step_by_step_thinking_procress_to_solve_the_question), "answer": str(short_and_direct_answer_of_the_question)}.'
     user_temp = f'Here is the patient note:\n{note}\n\nHere is the task:\n{question}\n\nPlease directly output the JSON dict formatted as {{"step_by_step_thinking": str(your_step_by_step_thinking_procress_to_solve_the_question), "answer": str(short_and_direct_answer_of_the_question)}}:'
     return system_msg, user_temp
-   
+
 def direct_answer(note, question):
     system_msg = 'You are a helpful assistant for calculating a score for a given patient note. Please output answer only without any other text. Your output should only contain a JSON dict formatted as {"answer": str(value which is the answer to the question)}.'
     user_temp = f'Here is the patient note:\n{note}\n\nHere is the task:\n{question}\n\nPlease directly output the JSON dict formatted as {{"answer": str(value which is the answer to the question)}}:'
@@ -35,7 +35,7 @@ def zero_shot_meditron(note, question):
     system_msg = '''You are a helpful assistant for calculating a score for a given patient note. Please think step-by-step to solve the question and then generate the required score. Your output should only contain a JSON dict formatted as {"step_by_step_thinking": str(your_step_by_step_thinking_procress_to_solve_the_question), "answer": str(short_and_direct_answer_of_the_question)}. Here is a demonstration (Replace the rationale and "X.XX" with your actual rationale and calculated value):\n\n### User:\nHere is the patient note:\n...\n\nHere is the task:\n...?\n\nPlease directly output the JSON dict formatted as {"step_by_step_thinking": str(your_step_by_step_thinking_procress_to_solve_the_question), "answer": str(short_and_direct_answer_of_the_question)}.\n\n### Assistant:\n{"step_by_step_thinking": rationale, "answer": X.XX}'''
     user_temp = f'###User:\nHere is the patient note:\n\n{note}\n\nHere is the task:\n{question}\n\nPlease directly output the JSON dict formatted as {{"step_by_step_thinking": str(your_step_by_step_thinking_procress_to_solve_the_question), "answer": str(short_and_direct_answer_of_the_question)}}.\n\n### Assistant:\n'
     return system_msg, user_temp
-   
+
 def direct_answer_meditron(note, question):
     system_msg = 'You are a helpful assistant for calculating a score for a given patient note. Please output answer only without any other text. Your output should only contain a JSON dict formatted as {"answer": str(value which is the answer to the question)}. Here is a demonstration (Replace "X.XX" with your the actual calculated value):\n\n### User:\nHere is the patient note:\n...\n\nHere is the task:\n...?\n\nPlease directly output the JSON dict formatted as {"answer": str(value which is the answer to the question)}.\n\n### Assistant:\n{"answer": X.XX}'
     user_temp = f'###User:\nHere is the patient note:\n\n{note}\n\nHere is the task:\n\n{question}\n\nPlease directly output the JSON dict formatted as {{"answer": str(value which is the answer to the question)}}.\n\n### Assistant:\n'
@@ -59,7 +59,7 @@ def extract_answer(answer, calid):
     if matches:
     # Select the last match
         last_match = matches[-1]
-        explanation = last_match    
+        explanation = last_match
     else:
         explanation = "No Explanation"
 
@@ -70,7 +70,7 @@ def extract_answer(answer, calid):
         extracted_answer = extracted_answer[-1].strip().strip('"')
         if extracted_answer == "str(short_and_direct_answer_of_the_question)" or extracted_answer == "str(value which is the answer to the question)" or extracted_answer == "X.XX":
             extracted_answer = "Not Found"
-    
+
     if calid in [13, 68]:
         # Output Type: date
         match = re.search(r"^(0?[1-9]|1[0-2])\/(0?[1-9]|[12][0-9]|3[01])\/(\d{4})", extracted_answer)
@@ -142,9 +142,9 @@ def extract_answer(answer, calid):
                     else:
                         answer = "N/A"
         if answer != "N/A":
-            answer = str(answer)          
- 
-    return answer, explanation 
+            answer = str(answer)
+
+    return answer, explanation
 
 if __name__ == "__main__":
 
@@ -180,13 +180,14 @@ if __name__ == "__main__":
         one_shot_json = json.load(file)
 
     df = pd.read_csv("../dataset/test_data.csv")
+    df = df.head(10)
 
     for index in tqdm.tqdm(range(len(df))):
 
         row = df.iloc[index]
 
         patient_note = row["Patient Note"]
-        question = row["Question"] 
+        question = row["Question"]
         calculator_id = str(row["Calculator ID"])
         note_id = str(row["Note ID"])
 
@@ -220,13 +221,13 @@ if __name__ == "__main__":
 
         answer = llm.answer(messages)
         print(answer)
-       
+
         try:
             answer_value, explanation = extract_answer(answer, int(calculator_id))
 
             print(answer_value)
             print(explanation)
-            
+
             correctness = check_correctness(answer_value, row["Ground Truth Answer"], calculator_id, row["Upper Limit"], row["Lower Limit"])
 
             status = "Correct" if correctness else "Incorrect"
@@ -239,7 +240,7 @@ if __name__ == "__main__":
                 "Note ID": note_id,
                 "Patient Note": patient_note,
                 "Question": question,
-                "LLM Answer": answer_value, 
+                "LLM Answer": answer_value,
                 "LLM Explanation": explanation,
                 "Ground Truth Answer": row["Ground Truth Answer"],
                 "Ground Truth Explanation": row["Ground Truth Explanation"],
@@ -248,8 +249,8 @@ if __name__ == "__main__":
 
             if prompt_style == "direct_answer":
                 outputs["LLM Explanation"] = "N/A"
-        
-        
+
+
         except Exception as e:
             outputs = {
                 "Row Number": int(row["Row Number"]),
@@ -259,7 +260,7 @@ if __name__ == "__main__":
                 "Note ID": note_id,
                 "Patient Note": patient_note,
                 "Question": question,
-                "LLM Answer": str(e), 
+                "LLM Answer": str(e),
                 "LLM Explanation": str(e),
                 "Ground Truth Answer": row["Ground Truth Answer"],
                 "Ground Truth Explanation": row["Ground Truth Explanation"],
@@ -271,7 +272,7 @@ if __name__ == "__main__":
                 outputs["LLM Explanation"] = "N/A"
 
         print(outputs)
-        
+
         with open(f"outputs/{output_path}", "a") as f:
             f.write(json.dumps(outputs) + "\n")
 
@@ -279,8 +280,8 @@ if __name__ == "__main__":
 
 
 
-    
 
 
 
-        
+
+
