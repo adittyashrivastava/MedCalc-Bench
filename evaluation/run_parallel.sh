@@ -31,7 +31,20 @@ echo "  Attention analysis: $([ -n "$ENABLE_ATTENTION" ] && echo "enabled" || ec
 echo "  Slurm partition: $PARTITION"
 echo ""
 
-# Step 1: Partition the dataset
+# Step 1: Activate conda environment and partition the dataset
+echo "🔧 Activating conda environment..."
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate medCalcEnv
+
+# Verify environment activation
+if [ "$CONDA_DEFAULT_ENV" != "medCalcEnv" ]; then
+    echo "❌ Failed to activate medCalcEnv conda environment"
+    exit 1
+fi
+
+echo "✅ Environment activated: $CONDA_DEFAULT_ENV"
+echo ""
+
 echo "📊 Step 1: Partitioning dataset..."
 python partition_dataset.py \
     --dataset ../dataset/test_data.csv \

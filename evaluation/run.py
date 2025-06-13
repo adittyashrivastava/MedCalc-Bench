@@ -16,8 +16,9 @@ from table_stats import compute_overall_accuracy
 try:
     from hf_config import HF_TOKEN
     os.environ["HUGGINGFACE_HUB_TOKEN"] = HF_TOKEN
+    os.environ["HUGGINGFACE_TOKEN"] = HF_TOKEN  # Also set this for llm_inference.py compatibility
 except ImportError:
-    print("Warning: hf_config.py not found. You may need to set HUGGINGFACE_HUB_TOKEN manually.")
+    print("Warning: hf_config.py not found. You may need to set HUGGINGFACE_TOKEN manually.")
 
 # Import attention_viz for attention analysis
 from attention_viz import AttentionVisualizer, AttentionExtractor, AttentionAnalyzer

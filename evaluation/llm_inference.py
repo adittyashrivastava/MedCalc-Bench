@@ -18,8 +18,24 @@ import tiktoken
 import openai
 import sys
 from huggingface_hub import login
+from huggingface_hub.utils import HfFolder
 
-login(token=os.getenv("HUGGINGFACE_TOKEN"))
+# Check if already logged in, if not try to login with token
+try:
+    # Check if already authenticated
+    current_token = HfFolder.get_token()
+    if current_token:
+        print("✅ Already authenticated with Hugging Face")
+    else:
+        # Try to login with environment token
+        hf_token = os.getenv("HUGGINGFACE_TOKEN")
+        if hf_token:
+            login(token=hf_token, add_to_git_credential=False)
+            print("✅ Logged in with provided token")
+        else:
+            print("⚠️ No HF token found, continuing without authentication")
+except Exception as e:
+    print(f"⚠️ HF authentication issue: {e}, continuing anyway...")
 
 openai.api_key = os.getenv("OPENAI_API_KEY") 
 
