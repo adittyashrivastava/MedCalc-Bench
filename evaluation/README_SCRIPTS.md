@@ -63,6 +63,31 @@ Results are saved to:
 
 ⚠️ **Important**: For optimal performance, especially for the full run, consider running on a GPU compute node rather than login nodes.
 
+### Getting a Debug Node on Babel
+
+To run on a GPU compute node instead of the login node:
+
+1. **Start an Interactive Session on debug**:
+   ```bash
+   # Ask for 1 GPU (debug allows up to 2), 4 CPUs, 16 GB RAM, 1 hour:
+   salloc --partition=debug --gres=gpu:1 --cpus-per-task=4 --mem=16G --time=01:00:00 \
+     srun --pty bash
+   ```
+   
+2. **Wait for resource allocation**: As soon as this grants you resources, your prompt will change—you're now on a compute node.
+
+3. **Navigate to the evaluation directory**:
+   ```bash
+   cd /home/hrangara/MedCalc/MedCalc-Bench/evaluation
+   ```
+
+4. **Run your script**:
+   ```bash
+   ./run_debug.sh    # or ./run_full.sh
+   ```
+
+This approach will provide GPU access and avoid the CUDA/memory errors that occur on login nodes.
+
 ## Troubleshooting
 
 If you encounter issues:
