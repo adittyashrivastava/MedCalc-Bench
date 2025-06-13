@@ -156,6 +156,7 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, help='Specify which model you are using. Options are OpenAI/GPT-4, OpenAI/GPT-3.5-turbo, mistralai/Mistral-7B-Instruct-v0.2, mistralai/Mixtral-8x7B-Instruct-v0.1, meta-llama/Meta-Llama-3-8B-Instruct, meta-llama/Meta-Llama-3-70B-Instruct, epfl-llm/meditron-70b, axiong/PMC_LLaMA_13B')
     parser.add_argument('--prompt', type=str, help='Specify prompt type. Options are direct_answer, zero_shot, one_shot')
     parser.add_argument('--enable_attention_analysis', action='store_true', help='Enable attention visualization and analysis for each entry')
+    parser.add_argument('--debug_run', action='store_true', help='Enable debug run mode. In debug run mode, only process the first 10 rows. In full run mode, process all rows.')
 
     args = parser.parse_args()
 
@@ -213,7 +214,12 @@ if __name__ == "__main__":
         one_shot_json = json.load(file)
 
     df = pd.read_csv("../dataset/test_data.csv")
-    df = df.head(10)
+
+    # In debug run mode, only process the first 10 rows. In full run mode, process all rows.
+    if args.debug_run:
+        df = df.head(10)
+
+    print(f"Processing {len(df)} rows...")
 
     for index in tqdm.tqdm(range(len(df))):
 
@@ -462,7 +468,7 @@ if __name__ == "__main__":
     # Print attention analysis summary if enabled
     if enable_attention:
         print(f"\nProcessing completed with attention analysis!")
-        print(fAttention visualizations saved to: {attention_output_dir}")
+        print(f"Attention visualizations saved to: {attention_output_dir}")
         print("Generated files for each entry:")
         print("   - basic_attention.html (interactive visualization)")
         print("   - attention_heatmap.png (static heatmap)")
