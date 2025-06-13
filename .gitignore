@@ -52,3 +52,8 @@ ENV/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Hugging Face token and other secrets
+hf_config.py
+*.token
+secrets.json

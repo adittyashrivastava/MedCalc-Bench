@@ -1,0 +1,10 @@
+{
+    "lab": {
+        "average": 10.0,
+        "std": 0.09
+    },
+    "overall": {
+        "average": 10.0,
+        "std": 0.01
+    }
+}

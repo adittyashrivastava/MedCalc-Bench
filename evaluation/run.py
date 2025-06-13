@@ -12,6 +12,13 @@ import numpy as np
 import ast
 from table_stats import compute_overall_accuracy
 
+# Import HF token configuration
+try:
+    from hf_config import HF_TOKEN
+    os.environ["HUGGINGFACE_HUB_TOKEN"] = HF_TOKEN
+except ImportError:
+    print("Warning: hf_config.py not found. You may need to set HUGGINGFACE_HUB_TOKEN manually.")
+
 # Import attention_viz for attention analysis
 from attention_viz import AttentionVisualizer, AttentionExtractor, AttentionAnalyzer
 from attention_viz.utils.helpers import load_model_and_tokenizer
@@ -157,6 +164,9 @@ if __name__ == "__main__":
     parser.add_argument('--prompt', type=str, help='Specify prompt type. Options are direct_answer, zero_shot, one_shot')
     parser.add_argument('--enable_attention_analysis', action='store_true', help='Enable attention visualization and analysis for each entry')
     parser.add_argument('--debug_run', action='store_true', help='Enable debug run mode. In debug run mode, only process the first 10 rows. In full run mode, process all rows.')
+    parser.add_argument('--start_idx', type=int, default=0, help='Starting index for processing (for parallelization)')
+    parser.add_argument('--end_idx', type=int, default=None, help='Ending index for processing (for parallelization)')
+    parser.add_argument('--partition_id', type=str, default="", help='Partition identifier for output file naming')
 
     args = parser.parse_args()
 
@@ -164,7 +174,11 @@ if __name__ == "__main__":
     prompt_style = args.prompt
     enable_attention = args.enable_attention_analysis
 
-    output_path = f"{model_name.replace('/', '_')}_{prompt_style}.jsonl"
+    # Handle partition naming for parallel processing
+    if args.partition_id:
+        output_path = f"{model_name.replace('/', '_')}_{prompt_style}_partition_{args.partition_id}.jsonl"
+    else:
+        output_path = f"{model_name.replace('/', '_')}_{prompt_style}.jsonl"
 
     if not os.path.exists("outputs"):
         os.makedirs("outputs")
@@ -215,9 +229,18 @@ if __name__ == "__main__":
 
     df = pd.read_csv("../dataset/test_data.csv")
 
-    # In debug run mode, only process the first 10 rows. In full run mode, process all rows.
+    # Handle different processing modes
     if args.debug_run:
         df = df.head(10)
+        print(f"Debug mode: Processing first 10 rows...")
+    elif args.start_idx is not None or args.end_idx is not None:
+        # Parallel processing mode
+        start_idx = args.start_idx if args.start_idx is not None else 0
+        end_idx = args.end_idx if args.end_idx is not None else len(df)
+        df = df.iloc[start_idx:end_idx]
+        print(f"Parallel processing mode: Processing rows {start_idx} to {end_idx-1} (partition {args.partition_id})")
+    else:
+        print(f"Full processing mode: Processing all {len(df)} rows...")
 
     print(f"Processing {len(df)} rows...")
 
