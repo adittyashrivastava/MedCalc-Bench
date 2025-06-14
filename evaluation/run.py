@@ -268,8 +268,9 @@ if __name__ == "__main__":
         calculator_id = str(row["Calculator ID"])
         note_id = str(row["Note ID"])
 
-        if existing is not None:
+        if existing is not None and not args.debug_run:
             if existing[(existing["Calculator ID"] == calculator_id) & (existing["Note ID"] == str(row["Note ID"]))].shape[0] > 0:
+                print(f"Skipping Calculator {calculator_id}, Note {note_id} because it already exists")
                 continue
 
         if "pmc_llama" in model_name.lower():
@@ -301,6 +302,8 @@ if __name__ == "__main__":
 
         # Perform attention analysis if enabled
         attention_data = {}
+        # print attention visualizer
+        print(attention_visualizer)
         if enable_attention and attention_visualizer is not None:
             try:
                 print(f"🔍 Performing attention analysis for Calculator {calculator_id}, Note {note_id}...")
@@ -342,7 +345,51 @@ if __name__ == "__main__":
                     layer_indices = [0, 3, 6, 9]
                     print(f"🔄 Falling back to default layer {target_layer}, head {target_head}")
 
-                # 1. Basic attention visualization
+                # 1. Export essential attention data first (memory-efficient format)
+                try:
+                    print("💾 Exporting essential attention data early (memory-efficient)...")
+                    # Extract just the essential attention weights for the target layer/head
+                    essential_data = attention_extractor.extract_attention_weights(full_input_text)
+                    
+                    # Only keep the target layer and a few key layers to save memory
+                    essential_layers = [0, target_layer, essential_data["num_layers"]-1]  # First, target, last
+                    filtered_attention = []
+                    for i, layer_attn in enumerate(essential_data["attention_weights"]):
+                        if i in essential_layers:
+                            # Only keep a subset of heads to save memory
+                            max_heads_to_keep = min(8, layer_attn.shape[0])  # Keep max 8 heads
+                            filtered_attention.append(layer_attn[:max_heads_to_keep])
+                    
+                    # Create memory-efficient export
+                    essential_export = {
+                        "tokens": essential_data["tokens"],
+                        "num_layers": len(essential_layers),
+                        "num_heads": max_heads_to_keep,
+                        "target_layer": target_layer,
+                        "target_head": target_head,
+                        "sequence_length": essential_data["sequence_length"]
+                    }
+                    
+                    # Save as compressed numpy format (much more memory efficient than JSON)
+                    np.savez_compressed(
+                        os.path.join(entry_dir, "essential_attention_data.npz"),
+                        attention_weights=np.array(filtered_attention, dtype=object),
+                        **essential_export
+                    )
+                    attention_data["essential_data"] = "essential_attention_data.npz"
+                    print("✅ Essential attention data export completed")
+                    
+                    # Clear memory
+                    del essential_data, filtered_attention, essential_export
+                    import gc
+                    gc.collect()
+                    
+                except Exception as e:
+                    print(f"❌ Essential attention data export failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
+
+                # 2. Basic attention visualization
                 try:
                     print("📊 Generating basic attention visualization...")
                     attention_visualizer.visualize_attention(
@@ -359,7 +406,7 @@ if __name__ == "__main__":
                     import traceback
                     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 2. Attention heatmap
+                # 3. Attention heatmap
                 try:
                     print("🔥 Generating attention heatmap...")
                     attention_visualizer.plot_attention_heatmap(
@@ -371,70 +418,71 @@ if __name__ == "__main__":
                     )
                     attention_data["heatmap"] = "attention_heatmap.png"
                     print("✅ Attention heatmap completed")
+                    
+                    # Clear any cached attention data to free memory
+                    import gc
+                    gc.collect()
+                    
                 except Exception as e:
                     print(f"❌ Attention heatmap failed: {e}")
                     import traceback
                     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 3. Layer comparison
+                # 4. Layer comparison (use fewer layers to save memory)
                 try:
                     print("📐 Generating layer comparison...")
+                    # Limit to 4 layers max to reduce memory usage
+                    limited_layers = layer_indices[:4]
                     attention_visualizer.compare_layers(
                         text=full_input_text,
-                        layers=layer_indices,
+                        layers=limited_layers,
                         save_path=os.path.join(entry_dir, "layer_comparison.png")
                     )
                     attention_data["layer_comparison"] = "layer_comparison.png"
                     print("✅ Layer comparison completed")
+                    
+                    # Clear memory
+                    import gc
+                    gc.collect()
+                    
                 except Exception as e:
                     print(f"❌ Layer comparison failed: {e}")
                     import traceback
                     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 4. Get attention statistics
-                try:
-                    print("📈 Computing attention statistics...")
-                    stats = attention_visualizer.get_attention_stats(full_input_text)
-                    attention_data["statistics"] = {
-                        "overall_entropy": stats.get('overall_stats', {}).get('entropy', 0),
-                        "overall_sparsity": stats.get('overall_stats', {}).get('sparsity', 0),
-                        "max_attention": stats.get('overall_stats', {}).get('max_attention', 0)
-                    }
-                    print("✅ Attention statistics completed")
-                except Exception as e:
-                    print(f"❌ Attention statistics failed: {e}")
-                    import traceback
-                    print(f"Traceback:\n{traceback.format_exc()}")
+                # # 4. Get attention statistics
+                # try:
+                #     print("📈 Computing attention statistics...")
+                #     stats = attention_visualizer.get_attention_stats(full_input_text)
+                #     attention_data["statistics"] = {
+                #         "overall_entropy": stats.get('overall_stats', {}).get('entropy', 0),
+                #         "overall_sparsity": stats.get('overall_stats', {}).get('sparsity', 0),
+                #         "max_attention": stats.get('overall_stats', {}).get('max_attention', 0)
+                #     }
+                #     print("✅ Attention statistics completed")
+                # except Exception as e:
+                #     print(f"❌ Attention statistics failed: {e}")
+                #     import traceback
+                #     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 5. Advanced analysis with AttentionAnalyzer
-                try:
-                    print("🧠 Performing advanced positional analysis...")
-                    pos_analysis = attention_analyzer.analyze_positional_attention(full_input_text, layer=target_layer)
-                    attention_data["positional_analysis"] = {
-                        "attention_pattern_type": pos_analysis.get("aggregate_analysis", {}).get("attention_pattern_type", "unknown"),
-                        "local_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_local_ratio", 0),
-                        "global_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_global_ratio", 0)
-                    }
-                    print("✅ Positional analysis completed")
-                except Exception as e:
-                    print(f"❌ Positional analysis failed: {e}")
-                    import traceback
-                    print(f"Traceback:\n{traceback.format_exc()}")
+                # # 5. Advanced analysis with AttentionAnalyzer
+                # try:
+                #     print("🧠 Performing advanced positional analysis...")
+                #     pos_analysis = attention_analyzer.analyze_positional_attention(full_input_text, layer=target_layer)
+                #     attention_data["positional_analysis"] = {
+                #         "attention_pattern_type": pos_analysis.get("aggregate_analysis", {}).get("attention_pattern_type", "unknown"),
+                #         "local_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_local_ratio", 0),
+                #         "global_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_global_ratio", 0)
+                #     }
+                #     print("✅ Positional analysis completed")
+                # except Exception as e:
+                #     print(f"❌ Positional analysis failed: {e}")
+                #     import traceback
+                #     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 6. Export attention data
-                try:
-                    print("💾 Exporting raw attention data...")
-                    attention_visualizer.export_attention_data(
-                        text=full_input_text,
-                        format="json",
-                        save_path=os.path.join(entry_dir, "attention_data.json")
-                    )
-                    attention_data["raw_data"] = "attention_data.json"
-                    print("✅ Attention data export completed")
-                except Exception as e:
-                    print(f"❌ Attention data export failed: {e}")
-                    import traceback
-                    print(f"Traceback:\n{traceback.format_exc()}")
+                # 6. Skip memory-intensive raw data export (already done efficiently above)
+                print("⏭️  Skipping full raw data export (essential data already saved)")
+                # The essential attention data was already exported in step 1 using memory-efficient format
 
                 # 7. Generate comprehensive report
                 try:
