@@ -7,7 +7,7 @@ squeue -u $USER -o "%.10i %.12j %.8T %.10M %.6D %R"
 
 echo ""
 echo "📊 Job Details:"
-for job_id in 5070099 5070100 5070101 5070102; do
+for job_id in 5076059 5076060 5076061 5076062; do
     echo "  Job $job_id: $(squeue -j $job_id -h -o "%T %M" 2>/dev/null || echo "COMPLETED/NOT_FOUND")"
 done
 

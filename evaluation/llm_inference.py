@@ -52,7 +52,7 @@ class LLMInference:
                 self.max_length = 8192
             self.tokenizer = tiktoken.get_encoding("cl100k_base")
         else:
-            self.type = torch.bfloat16
+            self.type = torch.float32
             self.tokenizer = AutoTokenizer.from_pretrained(self.llm_name, cache_dir=self.cache_dir, legacy=False)
             if "mixtral" in llm_name.lower() or "mistral" in llm_name.lower():
                 self.tokenizer.chat_template = open('../templates/mistral-instruct.jinja').read().replace('    ', '').replace('\n', '')

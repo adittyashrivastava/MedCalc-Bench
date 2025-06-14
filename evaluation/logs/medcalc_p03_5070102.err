@@ -1,0 +1,26 @@
+/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/getpass.py:91: GetPassWarning: Can not control echo on the terminal.
+  passwd = fallback_getpass(prompt, stream)
+Warning: Password input may be echoed.
+Enter your token (input will not be visible): Traceback (most recent call last):
+  File "/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/getpass.py", line 69, in unix_getpass
+    old = termios.tcgetattr(fd)     # a copy to save
+termios.error: (25, 'Inappropriate ioctl for device')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/hrangara/MedCalc/MedCalc-Bench/evaluation/run.py", line 8, in <module>
+    from llm_inference import LLMInference
+  File "/home/hrangara/MedCalc/MedCalc-Bench/evaluation/llm_inference.py", line 22, in <module>
+    login(token=os.getenv("HUGGINGFACE_TOKEN"))
+  File "/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/site-packages/huggingface_hub/_login.py", line 115, in login
+    interpreter_login(new_session=new_session, write_permission=write_permission)
+  File "/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/site-packages/huggingface_hub/_login.py", line 191, in interpreter_login
+    token = getpass("Enter your token (input will not be visible): ")
+  File "/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/getpass.py", line 91, in unix_getpass
+    passwd = fallback_getpass(prompt, stream)
+  File "/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/getpass.py", line 126, in fallback_getpass
+    return _raw_input(prompt, stream)
+  File "/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/getpass.py", line 148, in _raw_input
+    raise EOFError
+EOFError

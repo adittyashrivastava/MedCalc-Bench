@@ -208,22 +208,36 @@ if __name__ == "__main__":
     attention_visualizer = None
     attention_analyzer = None
     if enable_attention:
-        try:
-            print("🔧 Initializing attention analysis components...")
-            # Get model and tokenizer from LLMInference object
-            model = llm.model
-            tokenizer = llm.tokenizer
-
-            # Initialize attention visualization components
-            attention_visualizer = AttentionVisualizer(model, tokenizer)
-            attention_extractor = AttentionExtractor(model, tokenizer)
-            attention_analyzer = AttentionAnalyzer(attention_extractor)
-
-            print("✅ Attention analysis components initialized successfully")
-        except Exception as e:
-            print(f"⚠️  Failed to initialize attention analysis: {e}")
-            print("Continuing without attention analysis...")
+        # Check if this is an OpenAI model - they don't support attention extraction
+        if "openai" in model_name.lower():
+            print("⚠️  Attention analysis is not supported for OpenAI models. Disabling attention analysis.")
             enable_attention = False
+        else:
+            try:
+                print("🔧 Initializing attention analysis components...")
+                # Get model and tokenizer from LLMInference object
+                model = llm.model
+                tokenizer = llm.tokenizer
+
+                # Initialize attention visualization components
+                attention_visualizer = AttentionVisualizer(model, tokenizer)
+                attention_extractor = AttentionExtractor(model, tokenizer)
+                attention_analyzer = AttentionAnalyzer(attention_extractor)
+
+                # Test basic functionality
+                print("🧪 Testing basic attention extraction...")
+                try:
+                    test_result = attention_extractor.extract_attention_weights("Hello world, this is a test.")
+                    print(f"✅ Basic test passed - Model has {test_result['num_layers']} layers, {test_result['num_heads']} heads")
+                except Exception as e:
+                    print(f"❌ Basic test failed: {e}")
+                    raise e  # Re-raise to prevent using broken components
+
+                print("✅ Attention analysis components initialized successfully")
+            except Exception as e:
+                print(f"⚠️  Failed to initialize attention analysis: {e}")
+                print("Continuing without attention analysis...")
+                enable_attention = False
 
     with open("one_shot_finalized_explanation.json", "r") as file:
         one_shot_json = json.load(file)
@@ -294,92 +308,151 @@ if __name__ == "__main__":
                 # Create organized output directory for this specific entry
                 entry_dir = os.path.join(attention_output_dir, f"calc_{calculator_id}_note_{note_id}")
                 os.makedirs(entry_dir, exist_ok=True)
+                print(f"📁 Created output directory: {entry_dir}")
 
                 # Combine the full input text for attention analysis
                 full_input_text = f"System: {system}\n\nUser: {user}"
+                print(f"📝 Input text length: {len(full_input_text)} characters")
+
+                # Get model info for dynamic layer/head selection
+                try:
+                    print("🔍 Detecting model architecture...")
+                    # Extract a small sample to get model dimensions
+                    sample_data = attention_extractor.extract_attention_weights("Sample text for architecture detection.")
+                    num_layers = sample_data["num_layers"]
+                    num_heads = sample_data["num_heads"]
+                    
+                    # Select middle layer and a valid head
+                    target_layer = min(6, num_layers - 1)  # Use layer 6 or the last layer if fewer than 7 layers
+                    target_head = min(4, num_heads - 1)    # Use head 4 or the last head if fewer than 5 heads
+                    
+                    print(f"📊 Model has {num_layers} layers and {num_heads} heads per layer")
+                    print(f"🎯 Using layer {target_layer} and head {target_head} for analysis")
+                    
+                    # Also select layer range for comparison
+                    layer_indices = [0, max(1, num_layers//4), max(2, num_layers//2), max(3, num_layers-1)]
+                    layer_indices = sorted(list(set(layer_indices)))  # Remove duplicates and sort
+                    print(f"📐 Using layers {layer_indices} for comparison")
+                    
+                except Exception as e:
+                    print(f"⚠️ Could not detect model architecture: {e}")
+                    # Fallback to default values
+                    target_layer = 6
+                    target_head = 4
+                    layer_indices = [0, 3, 6, 9]
+                    print(f"🔄 Falling back to default layer {target_layer}, head {target_head}")
 
                 # 1. Basic attention visualization
                 try:
+                    print("📊 Generating basic attention visualization...")
                     attention_visualizer.visualize_attention(
                         text=full_input_text,
-                        layer=6,  # Middle layer
-                        head=4,   # Specific head
+                        layer=target_layer,
+                        head=target_head,
                         save_path=os.path.join(entry_dir, "basic_attention.html"),
                         interactive=True
                     )
                     attention_data["basic_visualization"] = "basic_attention.html"
+                    print("✅ Basic attention visualization completed")
                 except Exception as e:
-                    print(f"Basic attention visualization failed: {e}")
+                    print(f"❌ Basic attention visualization failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 2. Attention heatmap
                 try:
+                    print("🔥 Generating attention heatmap...")
                     attention_visualizer.plot_attention_heatmap(
                         text=full_input_text,
-                        layer=6,
-                        head=4,
+                        layer=target_layer,
+                        head=target_head,
                         title=f"Medical Calculation - Calculator {calculator_id}",
                         save_path=os.path.join(entry_dir, "attention_heatmap.png")
                     )
                     attention_data["heatmap"] = "attention_heatmap.png"
+                    print("✅ Attention heatmap completed")
                 except Exception as e:
-                    print(f"Attention heatmap failed: {e}")
+                    print(f"❌ Attention heatmap failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 3. Layer comparison
                 try:
+                    print("📐 Generating layer comparison...")
                     attention_visualizer.compare_layers(
                         text=full_input_text,
-                        layers=[0, 3, 6, 9],  # Early, middle, and late layers
+                        layers=layer_indices,
                         save_path=os.path.join(entry_dir, "layer_comparison.png")
                     )
                     attention_data["layer_comparison"] = "layer_comparison.png"
+                    print("✅ Layer comparison completed")
                 except Exception as e:
-                    print(f"Layer comparison failed: {e}")
+                    print(f"❌ Layer comparison failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 4. Get attention statistics
                 try:
+                    print("📈 Computing attention statistics...")
                     stats = attention_visualizer.get_attention_stats(full_input_text)
                     attention_data["statistics"] = {
                         "overall_entropy": stats.get('overall_stats', {}).get('entropy', 0),
                         "overall_sparsity": stats.get('overall_stats', {}).get('sparsity', 0),
                         "max_attention": stats.get('overall_stats', {}).get('max_attention', 0)
                     }
+                    print("✅ Attention statistics completed")
                 except Exception as e:
-                    print(f"Attention statistics failed: {e}")
+                    print(f"❌ Attention statistics failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 5. Advanced analysis with AttentionAnalyzer
                 try:
-                    pos_analysis = attention_analyzer.analyze_positional_attention(full_input_text, layer=6)
+                    print("🧠 Performing advanced positional analysis...")
+                    pos_analysis = attention_analyzer.analyze_positional_attention(full_input_text, layer=target_layer)
                     attention_data["positional_analysis"] = {
                         "attention_pattern_type": pos_analysis.get("aggregate_analysis", {}).get("attention_pattern_type", "unknown"),
                         "local_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_local_ratio", 0),
                         "global_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_global_ratio", 0)
                     }
+                    print("✅ Positional analysis completed")
                 except Exception as e:
-                    print(f"Positional analysis failed: {e}")
+                    print(f"❌ Positional analysis failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 6. Export attention data
                 try:
+                    print("💾 Exporting raw attention data...")
                     attention_visualizer.export_attention_data(
                         text=full_input_text,
                         format="json",
                         save_path=os.path.join(entry_dir, "attention_data.json")
                     )
                     attention_data["raw_data"] = "attention_data.json"
+                    print("✅ Attention data export completed")
                 except Exception as e:
-                    print(f"Attention data export failed: {e}")
+                    print(f"❌ Attention data export failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 7. Generate comprehensive report
                 try:
+                    print("📋 Generating comprehensive analysis report...")
                     attention_analyzer.export_analysis_report(
                         text=full_input_text,
                         save_path=os.path.join(entry_dir, "attention_report.md")
                     )
                     attention_data["analysis_report"] = "attention_report.md"
+                    print("✅ Analysis report completed")
                 except Exception as e:
-                    print(f"Analysis report failed: {e}")
+                    print(f"❌ Analysis report failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 8. Head specialization analysis (with multiple related texts)
                 try:
+                    print("🎯 Performing head specialization analysis...")
                     related_texts = [
                         full_input_text,
                         f"Patient Note: {patient_note}",
@@ -389,7 +462,7 @@ if __name__ == "__main__":
 
                     head_analysis = attention_visualizer.analyze_head_specialization(
                         texts=related_texts,
-                        layer=6
+                        layer=target_layer
                     )
 
                     attention_visualizer.plot_head_specialization(
@@ -397,8 +470,11 @@ if __name__ == "__main__":
                         save_path=os.path.join(entry_dir, "head_specialization.png")
                     )
                     attention_data["head_specialization"] = "head_specialization.png"
+                    print("✅ Head specialization analysis completed")
                 except Exception as e:
-                    print(f"Head specialization analysis failed: {e}")
+                    print(f"❌ Head specialization analysis failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 9. Save attention analysis summary as JSON
                 try:

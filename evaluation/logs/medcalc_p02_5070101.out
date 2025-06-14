@@ -1,0 +1,19 @@
+🔧 Job p02 starting on node: babel-2-17
+📊 Processing rows 50 to 74
+🕐 Start time: Fri Jun 13 00:37:45 EDT 2025
+✅ Environment activated: medCalcEnv
+🐍 Python version: Python 3.10.18
+📍 Working directory: /home/hrangara/MedCalc/MedCalc-Bench/evaluation
+🚀 Starting MedCalc-Bench evaluation...
+
+    _|    _|  _|    _|    _|_|_|    _|_|_|  _|_|_|  _|      _|    _|_|_|      _|_|_|_|    _|_|      _|_|_|  _|_|_|_|
+    _|    _|  _|    _|  _|        _|          _|    _|_|    _|  _|            _|        _|    _|  _|        _|
+    _|_|_|_|  _|    _|  _|  _|_|  _|  _|_|    _|    _|  _|  _|  _|  _|_|      _|_|_|    _|_|_|_|  _|        _|_|_|
+    _|    _|  _|    _|  _|    _|  _|    _|    _|    _|    _|_|  _|    _|      _|        _|    _|  _|        _|
+    _|    _|    _|_|      _|_|_|    _|_|_|  _|_|_|  _|      _|    _|_|_|      _|        _|    _|    _|_|_|  _|_|_|_|
+
+    A token is already saved on your machine. Run `huggingface-cli whoami` to get more information or `huggingface-cli logout` if you want to log out.
+    Setting a new token will erase the existing one.
+    To login, `huggingface_hub` requires a token generated from https://huggingface.co/settings/tokens .
+🕐 End time: Fri Jun 13 00:37:48 EDT 2025
+❌ Job p02 failed with exit code 1

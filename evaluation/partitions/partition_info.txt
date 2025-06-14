@@ -1,0 +1,9 @@
+Dataset: ../dataset/test_data.csv
+Total examples: 100
+Number of partitions: 4
+Examples per partition: 25
+
+p00: 0-24 (25 examples)
+p01: 25-49 (25 examples)
+p02: 50-74 (25 examples)
+p03: 75-99 (25 examples)
