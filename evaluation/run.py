@@ -11,6 +11,7 @@ import math
 import numpy as np
 import ast
 from table_stats import compute_overall_accuracy
+from datetime import datetime
 
 # Import HF token configuration
 try:
@@ -164,10 +165,12 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, help='Specify which model you are using. Options are OpenAI/GPT-4, OpenAI/GPT-3.5-turbo, mistralai/Mistral-7B-Instruct-v0.2, mistralai/Mixtral-8x7B-Instruct-v0.1, meta-llama/Meta-Llama-3-8B-Instruct, meta-llama/Meta-Llama-3-70B-Instruct, epfl-llm/meditron-70b, axiong/PMC_LLaMA_13B')
     parser.add_argument('--prompt', type=str, help='Specify prompt type. Options are direct_answer, zero_shot, one_shot')
     parser.add_argument('--enable_attention_analysis', action='store_true', help='Enable attention visualization and analysis for each entry')
-    parser.add_argument('--debug_run', action='store_true', help='Enable debug run mode. In debug run mode, only process the first 10 rows. In full run mode, process all rows.')
+    parser.add_argument('--debug_run', action='store_true', help='Enable debug run mode. In debug run mode, only process the specified number of rows. In full run mode, process all rows.')
+    parser.add_argument('--num_examples', type=int, default=10, help='Number of examples to process in debug mode (default: 10)')
     parser.add_argument('--start_idx', type=int, default=0, help='Starting index for processing (for parallelization)')
     parser.add_argument('--end_idx', type=int, default=None, help='Ending index for processing (for parallelization)')
     parser.add_argument('--partition_id', type=str, default="", help='Partition identifier for output file naming')
+    parser.add_argument('--output_dir', type=str, default=None, help='Output directory path. If not provided, defaults to current outputs/ directory')
 
     args = parser.parse_args()
 
@@ -175,25 +178,45 @@ if __name__ == "__main__":
     prompt_style = args.prompt
     enable_attention = args.enable_attention_analysis
 
+    # Setup output directory structure
+    if args.output_dir:
+        base_output_dir = args.output_dir
+        llm_output_dir = os.path.join(base_output_dir, "llm_results")
+        attention_output_dir = os.path.join(base_output_dir, "attention_results")
+        
+        # Create directories if they don't exist
+        os.makedirs(llm_output_dir, exist_ok=True)
+        if enable_attention:
+            os.makedirs(attention_output_dir, exist_ok=True)
+        
+        print(f"📁 Using custom output directory: {base_output_dir}")
+        print(f"📊 LLM results will be saved to: {llm_output_dir}")
+        if enable_attention:
+            print(f"👁️  Attention results will be saved to: {attention_output_dir}")
+    else:
+        # Default behavior - use current outputs directory
+        llm_output_dir = "outputs"
+        attention_output_dir = os.path.join("outputs", "attention_analysis")
+        if not os.path.exists(llm_output_dir):
+            os.makedirs(llm_output_dir)
+
     # Handle partition naming for parallel processing
     if args.partition_id:
         output_path = f"{model_name.replace('/', '_')}_{prompt_style}_partition_{args.partition_id}.jsonl"
     else:
         output_path = f"{model_name.replace('/', '_')}_{prompt_style}.jsonl"
 
-    if not os.path.exists("outputs"):
-        os.makedirs("outputs")
-
     # Create attention analysis output directory if needed
     if enable_attention:
-        attention_output_dir = os.path.join("outputs", "attention_analysis")
         os.makedirs(attention_output_dir, exist_ok=True)
         print(f"🔍 Attention analysis enabled. Outputs will be saved to: {attention_output_dir}")
 
-    if not os.path.exists(os.path.join("outputs", output_path)):
+    # Check for existing results in the LLM output directory
+    full_output_path = os.path.join(llm_output_dir, output_path)
+    if not os.path.exists(full_output_path):
         existing = None
     else:
-        existing = pd.read_json(os.path.join("outputs", output_path), lines=True)
+        existing = pd.read_json(full_output_path, lines=True)
         existing["Calculator ID"] = existing["Calculator ID"].astype(str)
         existing["Note ID"] = existing["Note ID"].astype(str)
 
@@ -246,8 +269,8 @@ if __name__ == "__main__":
 
     # Handle different processing modes
     if args.debug_run:
-        df = df.head(10)
-        print(f"Debug mode: Processing first 10 rows...")
+        df = df.head(args.num_examples)
+        print(f"Debug mode: Processing first {args.num_examples} rows...")
     elif args.start_idx is not None or args.end_idx is not None:
         # Parallel processing mode
         start_idx = args.start_idx if args.start_idx is not None else 0
@@ -309,7 +332,9 @@ if __name__ == "__main__":
                 print(f"🔍 Performing attention analysis for Calculator {calculator_id}, Note {note_id}...")
 
                 # Create organized output directory for this specific entry
-                entry_dir = os.path.join(attention_output_dir, f"calc_{calculator_id}_note_{note_id}")
+                # Use unique identifier: calc_{calculator_id}_note_{note_id}_row_{row_number}
+                row_number = int(row["Row Number"])
+                entry_dir = os.path.join(attention_output_dir, f"calc_{calculator_id}_note_{note_id}_row_{row_number}")
                 os.makedirs(entry_dir, exist_ok=True)
                 print(f"📁 Created output directory: {entry_dir}")
 
@@ -367,7 +392,10 @@ if __name__ == "__main__":
                         "num_heads": max_heads_to_keep,
                         "target_layer": target_layer,
                         "target_head": target_head,
-                        "sequence_length": essential_data["sequence_length"]
+                        "sequence_length": essential_data["sequence_length"],
+                        "calculator_id": calculator_id,
+                        "note_id": note_id,
+                        "row_number": row_number
                     }
                     
                     # Save as compressed numpy format (much more memory efficient than JSON)
@@ -413,7 +441,7 @@ if __name__ == "__main__":
                         text=full_input_text,
                         layer=target_layer,
                         head=target_head,
-                        title=f"Medical Calculation - Calculator {calculator_id}",
+                        title=f"Medical Calculation - Calculator {calculator_id}, Note {note_id}, Row {row_number}",
                         save_path=os.path.join(entry_dir, "attention_heatmap.png")
                     )
                     attention_data["heatmap"] = "attention_heatmap.png"
@@ -449,40 +477,6 @@ if __name__ == "__main__":
                     print(f"❌ Layer comparison failed: {e}")
                     import traceback
                     print(f"Traceback:\n{traceback.format_exc()}")
-
-                # # 4. Get attention statistics
-                # try:
-                #     print("📈 Computing attention statistics...")
-                #     stats = attention_visualizer.get_attention_stats(full_input_text)
-                #     attention_data["statistics"] = {
-                #         "overall_entropy": stats.get('overall_stats', {}).get('entropy', 0),
-                #         "overall_sparsity": stats.get('overall_stats', {}).get('sparsity', 0),
-                #         "max_attention": stats.get('overall_stats', {}).get('max_attention', 0)
-                #     }
-                #     print("✅ Attention statistics completed")
-                # except Exception as e:
-                #     print(f"❌ Attention statistics failed: {e}")
-                #     import traceback
-                #     print(f"Traceback:\n{traceback.format_exc()}")
-
-                # # 5. Advanced analysis with AttentionAnalyzer
-                # try:
-                #     print("🧠 Performing advanced positional analysis...")
-                #     pos_analysis = attention_analyzer.analyze_positional_attention(full_input_text, layer=target_layer)
-                #     attention_data["positional_analysis"] = {
-                #         "attention_pattern_type": pos_analysis.get("aggregate_analysis", {}).get("attention_pattern_type", "unknown"),
-                #         "local_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_local_ratio", 0),
-                #         "global_ratio": pos_analysis.get("aggregate_analysis", {}).get("average_global_ratio", 0)
-                #     }
-                #     print("✅ Positional analysis completed")
-                # except Exception as e:
-                #     print(f"❌ Positional analysis failed: {e}")
-                #     import traceback
-                #     print(f"Traceback:\n{traceback.format_exc()}")
-
-                # 6. Skip memory-intensive raw data export (already done efficiently above)
-                print("⏭️  Skipping full raw data export (essential data already saved)")
-                # The essential attention data was already exported in step 1 using memory-efficient format
 
                 # 7. Generate comprehensive report
                 try:
@@ -529,6 +523,7 @@ if __name__ == "__main__":
                     attention_summary = {
                         "calculator_id": calculator_id,
                         "note_id": note_id,
+                        "row_number": row_number,
                         "calculator_name": row.get("Calculator Name", "Unknown"),
                         "category": row.get("Category", "Unknown"),
                         "model_name": model_name,
@@ -537,13 +532,14 @@ if __name__ == "__main__":
                         "patient_note_length": len(patient_note),
                         "question_length": len(question),
                         "attention_files": attention_data,
-                        "timestamp": pd.Timestamp.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
+                        "unique_identifier": f"calc_{calculator_id}_note_{note_id}_row_{row_number}"
                     }
 
                     with open(os.path.join(entry_dir, "attention_summary.json"), "w") as f:
                         json.dump(attention_summary, f, indent=2)
 
-                    print(f"Attention analysis completed for Calculator {calculator_id}, Note {note_id}")
+                    print(f"Attention analysis completed for Calculator {calculator_id}, Note {note_id}, Row {row_number}")
                     print(f"Files saved to: {entry_dir}")
 
                 except Exception as e:
@@ -574,12 +570,14 @@ if __name__ == "__main__":
                 "LLM Explanation": explanation,
                 "Ground Truth Answer": row["Ground Truth Answer"],
                 "Ground Truth Explanation": row["Ground Truth Explanation"],
-                "Result": status
+                "Result": status,
+                "Timestamp": datetime.now().isoformat(),
+                "Unique_Identifier": f"calc_{calculator_id}_note_{note_id}_row_{int(row['Row Number'])}"
             }
 
             # Add attention analysis info to outputs if available
             if enable_attention and attention_data:
-                outputs["Attention_Analysis_Directory"] = f"attention_analysis/calc_{calculator_id}_note_{note_id}"
+                outputs["Attention_Analysis_Directory"] = f"attention_results/calc_{calculator_id}_note_{note_id}_row_{int(row['Row Number'])}"
                 outputs["Attention_Files_Generated"] = list(attention_data.keys())
 
             if prompt_style == "direct_answer":
@@ -599,7 +597,9 @@ if __name__ == "__main__":
                 "LLM Explanation": str(e),
                 "Ground Truth Answer": row["Ground Truth Answer"],
                 "Ground Truth Explanation": row["Ground Truth Explanation"],
-                "Result": "Incorrect"
+                "Result": "Incorrect",
+                "Timestamp": datetime.now().isoformat(),
+                "Unique_Identifier": f"calc_{calculator_id}_note_{note_id}_row_{int(row['Row Number'])}"
             }
             print(f"error in {calculator_id} {note_id}: "  + str(e))
 
@@ -608,23 +608,29 @@ if __name__ == "__main__":
 
         print(outputs)
 
-        with open(f"outputs/{output_path}", "a") as f:
+        # Save to the appropriate LLM results directory
+        with open(full_output_path, "a") as f:
             f.write(json.dumps(outputs) + "\n")
 
-    compute_overall_accuracy(output_path, model_name, prompt_style)
+    # Use the full output path for accuracy computation
+    compute_overall_accuracy(os.path.basename(full_output_path), model_name, prompt_style)
 
     # Print attention analysis summary if enabled
     if enable_attention:
         print(f"\nProcessing completed with attention analysis!")
+        print(f"LLM results saved to: {llm_output_dir}")
         print(f"Attention visualizations saved to: {attention_output_dir}")
         print("Generated files for each entry:")
         print("   - basic_attention.html (interactive visualization)")
         print("   - attention_heatmap.png (static heatmap)")
         print("   - layer_comparison.png (multi-layer comparison)")
-        print("   - attention_data.json (raw attention weights)")
+        print("   - essential_attention_data.npz (compressed attention weights)")
         print("   - attention_report.md (comprehensive analysis)")
         print("   - head_specialization.png (head analysis)")
         print("   - attention_summary.json (metadata and file list)")
+    else:
+        print(f"\nProcessing completed!")
+        print(f"LLM results saved to: {llm_output_dir}")
 
 
 
