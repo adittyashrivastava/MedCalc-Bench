@@ -1,0 +1,41 @@
+======================================
+SLURM Job Information
+======================================
+Job ID: 5119723
+Job Name: medcalc_debug_10_20250617_002934
+Node: babel-3-5
+Started at: Tue Jun 17 00:29:35 EDT 2025
+Number of examples: 10
+======================================
+
+🚀 Running debug script with default output directory...
+🔧 MedCalc-Bench Debug Run
+==========================
+📅 Started at: Tue Jun 17 00:29:35 EDT 2025
+📊 Number of examples: 10
+
+📁 Output directory: /data/user_data/hrangara/experiments-10/20250617_002935/outputs
+✅ Created output directory structure
+
+🐍 Activating medCalcEnv conda environment...
+✅ Environment activated successfully: medCalcEnv
+🐍 Python path: /home/hrangara/miniconda3/envs/medCalcEnv/bin/python
+📦 Package paths found: 4
+
+🚀 Starting debug run with attention analysis...
+📊 Running on limited dataset (first 10 rows) for testing
+🔍 Model: meta-llama/Meta-Llama-3-8B-Instruct
+💡 Prompt: zero_shot
+👁️  Attention analysis: ENABLED
+
+✅ Already authenticated with Hugging Face
+📁 Using custom output directory: /data/user_data/hrangara/experiments-10/20250617_002935/outputs
+📊 LLM results will be saved to: /data/user_data/hrangara/experiments-10/20250617_002935/outputs/llm_results
+👁️  Attention results will be saved to: /data/user_data/hrangara/experiments-10/20250617_002935/outputs/attention_results
+🔍 Attention analysis enabled. Outputs will be saved to: /data/user_data/hrangara/experiments-10/20250617_002935/outputs/attention_results
+🔧 Initializing attention analysis components...
+🧪 Testing basic attention extraction...
+✅ Basic test passed - Model has 32 layers, 32 heads
+✅ Attention analysis components initialized successfully
+Debug mode: Processing first 10 rows...
+Processing 10 rows...

@@ -33,6 +33,7 @@ echo "📁 Output directory: $OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR/llm_results"
 mkdir -p "$OUTPUT_DIR/attention_results"
+mkdir -p "$OUTPUT_DIR/attrieval_results"
 
 echo "✅ Created output directory structure"
 echo ""
@@ -53,11 +54,12 @@ else
 fi
 
 echo ""
-echo "🚀 Starting debug run with attention analysis..."
+echo "🚀 Starting debug run with attention analysis and ATTRIEVAL..."
 echo "📊 Running on limited dataset (first $NUM_EXAMPLES rows) for testing"
 echo "🔍 Model: meta-llama/Meta-Llama-3-8B-Instruct"
 echo "💡 Prompt: zero_shot"
 echo "👁️  Attention analysis: ENABLED"
+echo "🎯 ATTRIEVAL fact retrieval: ENABLED"
 echo ""
 
 # Run the debug version with custom output directory and number of examples
@@ -65,6 +67,7 @@ python run.py \
     --model meta-llama/Meta-Llama-3-8B-Instruct \
     --prompt zero_shot \
     --enable_attention_analysis \
+    --enable_attrieval \
     --debug_run \
     --num_examples "$NUM_EXAMPLES" \
     --output_dir "$OUTPUT_DIR"
@@ -72,4 +75,5 @@ python run.py \
 echo ""
 echo "✅ Debug run completed at: $(date)"
 echo "📁 Check $OUTPUT_DIR/llm_results/ for LLM results"
-echo "👁️  Check $OUTPUT_DIR/attention_results/ for attention visualizations" 
+echo "👁️  Check $OUTPUT_DIR/attention_results/ for attention visualizations"
+echo "🎯 Check $OUTPUT_DIR/attrieval_results/ for ATTRIEVAL fact retrieval analysis" 

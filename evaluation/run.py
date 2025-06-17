@@ -21,8 +21,8 @@ try:
 except ImportError:
     print("Warning: hf_config.py not found. You may need to set HUGGINGFACE_TOKEN manually.")
 
-# Import attention_viz for attention analysis
-from attention_viz import AttentionVisualizer, AttentionExtractor, AttentionAnalyzer
+# Import attention_viz for attention analysis and ATTRIEVAL
+from attention_viz import AttentionVisualizer, AttentionExtractor, AttentionAnalyzer, AttrievelRetriever, AttrievelConfig
 from attention_viz.utils.helpers import load_model_and_tokenizer
 
 
@@ -165,6 +165,7 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, help='Specify which model you are using. Options are OpenAI/GPT-4, OpenAI/GPT-3.5-turbo, mistralai/Mistral-7B-Instruct-v0.2, mistralai/Mixtral-8x7B-Instruct-v0.1, meta-llama/Meta-Llama-3-8B-Instruct, meta-llama/Meta-Llama-3-70B-Instruct, epfl-llm/meditron-70b, axiong/PMC_LLaMA_13B')
     parser.add_argument('--prompt', type=str, help='Specify prompt type. Options are direct_answer, zero_shot, one_shot')
     parser.add_argument('--enable_attention_analysis', action='store_true', help='Enable attention visualization and analysis for each entry')
+    parser.add_argument('--enable_attrieval', action='store_true', help='Enable ATTRIEVAL fact retrieval analysis for each entry')
     parser.add_argument('--debug_run', action='store_true', help='Enable debug run mode. In debug run mode, only process the specified number of rows. In full run mode, process all rows.')
     parser.add_argument('--num_examples', type=int, default=10, help='Number of examples to process in debug mode (default: 10)')
     parser.add_argument('--start_idx', type=int, default=0, help='Starting index for processing (for parallelization)')
@@ -177,26 +178,33 @@ if __name__ == "__main__":
     model_name = args.model
     prompt_style = args.prompt
     enable_attention = args.enable_attention_analysis
+    enable_attrieval = args.enable_attrieval
 
     # Setup output directory structure
     if args.output_dir:
         base_output_dir = args.output_dir
         llm_output_dir = os.path.join(base_output_dir, "llm_results")
         attention_output_dir = os.path.join(base_output_dir, "attention_results")
+        attrieval_output_dir = os.path.join(base_output_dir, "attrieval_results")
         
         # Create directories if they don't exist
         os.makedirs(llm_output_dir, exist_ok=True)
         if enable_attention:
             os.makedirs(attention_output_dir, exist_ok=True)
+        if enable_attrieval:
+            os.makedirs(attrieval_output_dir, exist_ok=True)
         
         print(f"📁 Using custom output directory: {base_output_dir}")
         print(f"📊 LLM results will be saved to: {llm_output_dir}")
         if enable_attention:
             print(f"👁️  Attention results will be saved to: {attention_output_dir}")
+        if enable_attrieval:
+            print(f"🔍 ATTRIEVAL results will be saved to: {attrieval_output_dir}")
     else:
         # Default behavior - use current outputs directory
         llm_output_dir = "outputs"
         attention_output_dir = os.path.join("outputs", "attention_analysis")
+        attrieval_output_dir = os.path.join("outputs", "attrieval_analysis")
         if not os.path.exists(llm_output_dir):
             os.makedirs(llm_output_dir)
 
@@ -210,6 +218,11 @@ if __name__ == "__main__":
     if enable_attention:
         os.makedirs(attention_output_dir, exist_ok=True)
         print(f"🔍 Attention analysis enabled. Outputs will be saved to: {attention_output_dir}")
+    
+    # Create ATTRIEVAL analysis output directory if needed
+    if enable_attrieval:
+        os.makedirs(attrieval_output_dir, exist_ok=True)
+        print(f"🎯 ATTRIEVAL analysis enabled. Outputs will be saved to: {attrieval_output_dir}")
 
     # Check for existing results in the LLM output directory
     full_output_path = os.path.join(llm_output_dir, output_path)
@@ -230,37 +243,55 @@ if __name__ == "__main__":
     # Initialize attention analysis components if enabled
     attention_visualizer = None
     attention_analyzer = None
-    if enable_attention:
+    attrieval_retriever = None
+    shared_extractor = None
+    
+    if enable_attention or enable_attrieval:
         # Check if this is an OpenAI model - they don't support attention extraction
         if "openai" in model_name.lower():
-            print("⚠️  Attention analysis is not supported for OpenAI models. Disabling attention analysis.")
+            print("⚠️  Attention analysis and ATTRIEVAL are not supported for OpenAI models. Disabling both.")
             enable_attention = False
+            enable_attrieval = False
         else:
             try:
-                print("🔧 Initializing attention analysis components...")
+                print("🔧 Initializing attention analysis and ATTRIEVAL components...")
                 # Get model and tokenizer from LLMInference object
                 model = llm.model
                 tokenizer = llm.tokenizer
 
-                # Initialize attention visualization components
-                attention_visualizer = AttentionVisualizer(model, tokenizer)
-                attention_extractor = AttentionExtractor(model, tokenizer)
-                attention_analyzer = AttentionAnalyzer(attention_extractor)
+                # Initialize shared attention extractor
+                shared_extractor = AttentionExtractor(model, tokenizer)
+
+                # Initialize attention visualization components if needed
+                if enable_attention:
+                    attention_visualizer = AttentionVisualizer(model, tokenizer)
+                    attention_analyzer = AttentionAnalyzer(shared_extractor)
+
+                # Initialize ATTRIEVAL components if needed
+                if enable_attrieval:
+                    attrieval_config = AttrievelConfig(
+                        layer_fraction=0.25,      # Use last 25% of layers
+                        top_k=50,                 # Top 50 tokens per CoT token
+                        frequency_threshold=0.99, # Filter attention sinks
+                        max_facts=10             # Retrieve top 10 facts
+                    )
+                    attrieval_retriever = AttrievelRetriever(shared_extractor, attrieval_config)
 
                 # Test basic functionality
                 print("🧪 Testing basic attention extraction...")
                 try:
-                    test_result = attention_extractor.extract_attention_weights("Hello world, this is a test.")
+                    test_result = shared_extractor.extract_attention_weights("Hello world, this is a test.")
                     print(f"✅ Basic test passed - Model has {test_result['num_layers']} layers, {test_result['num_heads']} heads")
                 except Exception as e:
                     print(f"❌ Basic test failed: {e}")
                     raise e  # Re-raise to prevent using broken components
 
-                print("✅ Attention analysis components initialized successfully")
+                print("✅ Attention analysis and ATTRIEVAL components initialized successfully")
             except Exception as e:
-                print(f"⚠️  Failed to initialize attention analysis: {e}")
-                print("Continuing without attention analysis...")
+                print(f"⚠️  Failed to initialize attention analysis/ATTRIEVAL: {e}")
+                print("Continuing without attention analysis and ATTRIEVAL...")
                 enable_attention = False
+                enable_attrieval = False
 
     with open("one_shot_finalized_explanation.json", "r") as file:
         one_shot_json = json.load(file)
@@ -325,6 +356,9 @@ if __name__ == "__main__":
 
         # Perform attention analysis if enabled
         attention_data = {}
+        # Perform ATTRIEVAL analysis if enabled
+        attrieval_data = {}
+        
         # print attention visualizer
         print(attention_visualizer)
         if enable_attention and attention_visualizer is not None:
@@ -346,7 +380,7 @@ if __name__ == "__main__":
                 try:
                     print("🔍 Detecting model architecture...")
                     # Extract a small sample to get model dimensions
-                    sample_data = attention_extractor.extract_attention_weights("Sample text for architecture detection.")
+                    sample_data = shared_extractor.extract_attention_weights("Sample text for architecture detection.")
                     num_layers = sample_data["num_layers"]
                     num_heads = sample_data["num_heads"]
                     
@@ -355,12 +389,14 @@ if __name__ == "__main__":
                     target_head = min(4, num_heads - 1)    # Use head 4 or the last head if fewer than 5 heads
                     
                     print(f"📊 Model has {num_layers} layers and {num_heads} heads per layer")
-                    print(f"🎯 Using layer {target_layer} and head {target_head} for analysis")
+
+
+                    # print(f"🎯 Using layer {target_layer} and head {target_head} for analysis")
                     
-                    # Also select layer range for comparison
-                    layer_indices = [0, max(1, num_layers//4), max(2, num_layers//2), max(3, num_layers-1)]
-                    layer_indices = sorted(list(set(layer_indices)))  # Remove duplicates and sort
-                    print(f"📐 Using layers {layer_indices} for comparison")
+                    # # Also select layer range for comparison
+                    # layer_indices = [0, max(1, num_layers//4), max(2, num_layers//2), max(3, num_layers-1)]
+                    # layer_indices = sorted(list(set(layer_indices)))  # Remove duplicates and sort
+                    # print(f"📐 Using layers {layer_indices} for comparison")
                     
                 except Exception as e:
                     print(f"⚠️ Could not detect model architecture: {e}")
@@ -374,7 +410,7 @@ if __name__ == "__main__":
                 try:
                     print("💾 Exporting essential attention data early (memory-efficient)...")
                     # Extract just the essential attention weights for the target layer/head
-                    essential_data = attention_extractor.extract_attention_weights(full_input_text)
+                    essential_data = shared_extractor.extract_attention_weights(full_input_text)
                     
                     # Only keep the target layer and a few key layers to save memory
                     essential_layers = [0, target_layer, essential_data["num_layers"]-1]  # First, target, last
@@ -548,6 +584,107 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"Attention analysis failed for Calculator {calculator_id}, Note {note_id}: {e}")
 
+        # Perform ATTRIEVAL analysis if enabled
+        if enable_attrieval and attrieval_retriever is not None:
+            try:
+                print(f"🎯 Performing ATTRIEVAL analysis for Calculator {calculator_id}, Note {note_id}...")
+
+                # Create organized output directory for this specific entry
+                # Use unique identifier: calc_{calculator_id}_note_{note_id}_row_{row_number}
+                row_number = int(row["Row Number"])
+                entry_dir = os.path.join(attrieval_output_dir, f"calc_{calculator_id}_note_{note_id}_row_{row_number}")
+                os.makedirs(entry_dir, exist_ok=True)
+                print(f"📁 Created ATTRIEVAL output directory: {entry_dir}")
+
+                # Extract the raw LLM response for CoT analysis
+                # Use the full answer for ATTRIEVAL
+                raw_answer, explanation = extract_answer(answer, int(calculator_id))
+                
+                # For ATTRIEVAL, we need:
+                # 1. Context (patient note)
+                # 2. Question
+                # 3. CoT response (the step-by-step thinking part)
+                context = patient_note
+                question_text = question
+                
+                # Try to extract step-by-step thinking from the answer
+                cot_response = explanation if explanation != "No Explanation" else answer
+                
+                print(f"📝 Context length: {len(context)} characters")
+                print(f"❓ Question length: {len(question_text)} characters")
+                print(f"🧠 CoT response length: {len(cot_response)} characters")
+
+                # Run ATTRIEVAL fact retrieval
+                print("🔍 Running ATTRIEVAL fact retrieval...")
+                retrieval_result = attrieval_retriever.retrieve_facts(
+                    context=context,
+                    question=question_text,
+                    cot_response=cot_response,
+                    use_cross_evaluation=True
+                )
+
+                # Save detailed ATTRIEVAL results
+                try:
+                    print("💾 Saving ATTRIEVAL results...")
+                    
+                    # 1. Export comprehensive results as JSON
+                    attrieval_retriever.export_retrieval_result(
+                        retrieval_result, 
+                        os.path.join(entry_dir, "attrieval_results.json")
+                    )
+                    attrieval_data["results_json"] = "attrieval_results.json"
+                    print("✅ ATTRIEVAL results JSON saved")
+
+                    # 2. Generate and save human-readable report
+                    readable_report = attrieval_retriever.visualize_retrieved_facts(retrieval_result)
+                    with open(os.path.join(entry_dir, "attrieval_analysis_report.md"), "w") as f:
+                        f.write(readable_report)
+                    attrieval_data["analysis_report"] = "attrieval_analysis_report.md"
+                    print("✅ ATTRIEVAL analysis report saved")
+
+                    # 3. Save top retrieved facts as separate JSON for easy access
+                    top_facts_summary = {
+                        "calculator_id": calculator_id,
+                        "note_id": note_id,
+                        "row_number": row_number,
+                        "question": question_text,
+                        "top_retrieved_facts": retrieval_result['retrieved_facts'],
+                        "num_facts_retrieved": len(retrieval_result['retrieved_facts']),
+                        "attrieval_config": retrieval_result['config'],
+                        "context_length": len(context),
+                        "cot_length": len(cot_response),
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    
+                    with open(os.path.join(entry_dir, "top_facts_summary.json"), "w") as f:
+                        json.dump(top_facts_summary, f, indent=2)
+                    attrieval_data["top_facts"] = "top_facts_summary.json"
+                    print("✅ Top facts summary saved")
+
+                    # 4. Save aggregated attention data (compressed)
+                    np.savez_compressed(
+                        os.path.join(entry_dir, "attrieval_attention_data.npz"),
+                        aggregated_attention=retrieval_result['aggregated_attention'],
+                        retriever_tokens=retrieval_result['retriever_tokens'],
+                        fact_scores=retrieval_result['fact_scores']
+                    )
+                    attrieval_data["attention_data"] = "attrieval_attention_data.npz"
+                    print("✅ ATTRIEVAL attention data saved")
+
+                    print(f"🎯 ATTRIEVAL analysis completed for Calculator {calculator_id}, Note {note_id}, Row {row_number}")
+                    print(f"📊 Retrieved {len(retrieval_result['retrieved_facts'])} top facts")
+                    print(f"📁 Files saved to: {entry_dir}")
+
+                except Exception as e:
+                    print(f"❌ ATTRIEVAL results save failed: {e}")
+                    import traceback
+                    print(f"Traceback:\n{traceback.format_exc()}")
+
+            except Exception as e:
+                print(f"❌ ATTRIEVAL analysis failed for Calculator {calculator_id}, Note {note_id}: {e}")
+                import traceback
+                print(f"Traceback:\n{traceback.format_exc()}")
+
         try:
             answer_value, explanation = extract_answer(answer, int(calculator_id))
 
@@ -579,6 +716,11 @@ if __name__ == "__main__":
             if enable_attention and attention_data:
                 outputs["Attention_Analysis_Directory"] = f"attention_results/calc_{calculator_id}_note_{note_id}_row_{int(row['Row Number'])}"
                 outputs["Attention_Files_Generated"] = list(attention_data.keys())
+            
+            # Add ATTRIEVAL analysis info to outputs if available
+            if enable_attrieval and attrieval_data:
+                outputs["ATTRIEVAL_Analysis_Directory"] = f"attrieval_results/calc_{calculator_id}_note_{note_id}_row_{int(row['Row Number'])}"
+                outputs["ATTRIEVAL_Files_Generated"] = list(attrieval_data.keys())
 
             if prompt_style == "direct_answer":
                 outputs["LLM Explanation"] = "N/A"
@@ -615,12 +757,13 @@ if __name__ == "__main__":
     # Use the full output path for accuracy computation
     compute_overall_accuracy(os.path.basename(full_output_path), model_name, prompt_style)
 
-    # Print attention analysis summary if enabled
+    # Print analysis summary if enabled
+    print(f"\nProcessing completed!")
+    print(f"📊 LLM results saved to: {llm_output_dir}")
+    
     if enable_attention:
-        print(f"\nProcessing completed with attention analysis!")
-        print(f"LLM results saved to: {llm_output_dir}")
-        print(f"Attention visualizations saved to: {attention_output_dir}")
-        print("Generated files for each entry:")
+        print(f"👁️  Attention visualizations saved to: {attention_output_dir}")
+        print("   Generated attention files for each entry:")
         # print("   - basic_attention.html (interactive visualization)")
         # print("   - attention_heatmap.png (static heatmap)")
         # print("   - layer_comparison.png (multi-layer comparison)")
@@ -628,9 +771,21 @@ if __name__ == "__main__":
         # print("   - attention_report.md (comprehensive analysis)")
         # print("   - head_specialization.png (head analysis)")
         print("   - attention_summary.json (metadata and file list)")
-    else:
-        print(f"\nProcessing completed!")
-        print(f"LLM results saved to: {llm_output_dir}")
+    
+    if enable_attrieval:
+        print(f"🎯 ATTRIEVAL analysis results saved to: {attrieval_output_dir}")
+        print("   Generated ATTRIEVAL files for each entry:")
+        print("   - attrieval_results.json (comprehensive retrieval results)")
+        print("   - attrieval_analysis_report.md (human-readable analysis)")
+        print("   - top_facts_summary.json (top retrieved facts)")
+        print("   - attrieval_attention_data.npz (attention weights and scores)")
+    
+    if enable_attention and enable_attrieval:
+        print("\n🚀 Both attention analysis and ATTRIEVAL fact retrieval completed!")
+    elif enable_attention:
+        print("\n👁️  Attention analysis completed!")
+    elif enable_attrieval:
+        print("\n🎯 ATTRIEVAL fact retrieval analysis completed!")
 
 
 

@@ -27,11 +27,12 @@ else
 fi
 
 echo ""
-echo "🔥 Starting FULL run with attention analysis..."
+echo "🔥 Starting FULL run with attention analysis and ATTRIEVAL..."
 echo "📊 Running on COMPLETE dataset - this will take significant time!"
 echo "🔍 Model: meta-llama/Meta-Llama-3-8B-Instruct"
 echo "💡 Prompt: zero_shot"
 echo "👁️  Attention analysis: ENABLED"
+echo "🎯 ATTRIEVAL fact retrieval: ENABLED"
 echo ""
 echo "⚠️  WARNING: This is a full run and may take hours to complete!"
 echo "💡 Consider running this on a GPU compute node for better performance"
@@ -52,10 +53,12 @@ echo ""
 python run.py \
     --model meta-llama/Meta-Llama-3-8B-Instruct \
     --prompt zero_shot \
-    --enable_attention_analysis
+    --enable_attention_analysis \
+    --enable_attrieval
 
 echo ""
 echo "🎉 Full run completed at: $(date)"
 echo "📁 Check outputs/ directory for results"
 echo "👁️  Check outputs/attention_analysis/ for attention visualizations"
-echo "📊 Full evaluation results should now be available" 
+echo "🎯 Check outputs/attrieval_analysis/ for ATTRIEVAL fact retrieval analysis"
+echo "📊 Full evaluation results with ATTRIEVAL analysis now available" 

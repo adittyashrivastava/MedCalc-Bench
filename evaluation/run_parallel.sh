@@ -14,6 +14,7 @@ NUM_PARTITIONS=4
 MODEL="meta-llama/Meta-Llama-3-8B-Instruct"
 PROMPT="zero_shot"
 ENABLE_ATTENTION="--enable_attention_analysis"
+ENABLE_ATTRIEVAL="--enable_attrieval"
 
 # Slurm job configuration
 PARTITION="debug"
@@ -28,6 +29,7 @@ echo "  Number of partitions: $NUM_PARTITIONS"
 echo "  Model: $MODEL"
 echo "  Prompt style: $PROMPT"
 echo "  Attention analysis: $([ -n "$ENABLE_ATTENTION" ] && echo "enabled" || echo "disabled")"
+echo "  ATTRIEVAL analysis: $([ -n "$ENABLE_ATTRIEVAL" ] && echo "enabled" || echo "disabled")"
 echo "  Slurm partition: $PARTITION"
 echo ""
 
@@ -131,6 +133,7 @@ python run.py \\
     --model "$MODEL" \\
     --prompt "$PROMPT" \\
     $ENABLE_ATTENTION \\
+    $ENABLE_ATTRIEVAL \\
     --start_idx $START_IDX \\
     --end_idx $END_IDX \\
     --partition_id "$PARTITION_ID"

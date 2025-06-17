@@ -1,0 +1,9 @@
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:02<00:06,  2.24s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:04<00:04,  2.26s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:06<00:02,  2.30s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.62s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.86s/it]
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+LlamaModel is using LlamaSdpaAttention, but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True`. Falling back to the manual attention implementation, but specifying the manual implementation will be required from Transformers version v5.0.0 onwards. This warning can be removed using the argument `attn_implementation="eager"` when loading the model.
+  0%|          | 0/10 [00:00<?, ?it/s]/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:515: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/home/hrangara/miniconda3/envs/medCalcEnv/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:520: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+slurmstepd: error: *** JOB 5119723 ON babel-3-5 CANCELLED AT 2025-06-17T00:29:54 ***
