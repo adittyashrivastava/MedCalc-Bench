@@ -417,106 +417,106 @@ if __name__ == "__main__":
                     import traceback
                     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 2. Basic attention visualization
-                try:
-                    print("📊 Generating basic attention visualization...")
-                    attention_visualizer.visualize_attention(
-                        text=full_input_text,
-                        layer=target_layer,
-                        head=target_head,
-                        save_path=os.path.join(entry_dir, "basic_attention.html"),
-                        interactive=True
-                    )
-                    attention_data["basic_visualization"] = "basic_attention.html"
-                    print("✅ Basic attention visualization completed")
-                except Exception as e:
-                    print(f"❌ Basic attention visualization failed: {e}")
-                    import traceback
-                    print(f"Traceback:\n{traceback.format_exc()}")
+                # # 2. Basic attention visualization
+                # try:
+                #     print("📊 Generating basic attention visualization...")
+                #     attention_visualizer.visualize_attention(
+                #         text=full_input_text,
+                #         layer=target_layer,
+                #         head=target_head,
+                #         save_path=os.path.join(entry_dir, "basic_attention.html"),
+                #         interactive=True
+                #     )
+                #     attention_data["basic_visualization"] = "basic_attention.html"
+                #     print("✅ Basic attention visualization completed")
+                # except Exception as e:
+                #     print(f"❌ Basic attention visualization failed: {e}")
+                #     import traceback
+                #     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 3. Attention heatmap
-                try:
-                    print("🔥 Generating attention heatmap...")
-                    attention_visualizer.plot_attention_heatmap(
-                        text=full_input_text,
-                        layer=target_layer,
-                        head=target_head,
-                        title=f"Medical Calculation - Calculator {calculator_id}, Note {note_id}, Row {row_number}",
-                        save_path=os.path.join(entry_dir, "attention_heatmap.png")
-                    )
-                    attention_data["heatmap"] = "attention_heatmap.png"
-                    print("✅ Attention heatmap completed")
+                # # 3. Attention heatmap
+                # try:
+                #     print("🔥 Generating attention heatmap...")
+                #     attention_visualizer.plot_attention_heatmap(
+                #         text=full_input_text,
+                #         layer=target_layer,
+                #         head=target_head,
+                #         title=f"Medical Calculation - Calculator {calculator_id}, Note {note_id}, Row {row_number}",
+                #         save_path=os.path.join(entry_dir, "attention_heatmap.png")
+                #     )
+                #     attention_data["heatmap"] = "attention_heatmap.png"
+                #     print("✅ Attention heatmap completed")
                     
-                    # Clear any cached attention data to free memory
-                    import gc
-                    gc.collect()
+                #     # Clear any cached attention data to free memory
+                #     import gc
+                #     gc.collect()
                     
-                except Exception as e:
-                    print(f"❌ Attention heatmap failed: {e}")
-                    import traceback
-                    print(f"Traceback:\n{traceback.format_exc()}")
+                # except Exception as e:
+                #     print(f"❌ Attention heatmap failed: {e}")
+                #     import traceback
+                #     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 4. Layer comparison (use fewer layers to save memory)
-                try:
-                    print("📐 Generating layer comparison...")
-                    # Limit to 4 layers max to reduce memory usage
-                    limited_layers = layer_indices[:4]
-                    attention_visualizer.compare_layers(
-                        text=full_input_text,
-                        layers=limited_layers,
-                        save_path=os.path.join(entry_dir, "layer_comparison.png")
-                    )
-                    attention_data["layer_comparison"] = "layer_comparison.png"
-                    print("✅ Layer comparison completed")
+                # # 4. Layer comparison (use fewer layers to save memory)
+                # try:
+                #     print("📐 Generating layer comparison...")
+                #     # Limit to 4 layers max to reduce memory usage
+                #     limited_layers = layer_indices[:4]
+                #     attention_visualizer.compare_layers(
+                #         text=full_input_text,
+                #         layers=limited_layers,
+                #         save_path=os.path.join(entry_dir, "layer_comparison.png")
+                #     )
+                #     attention_data["layer_comparison"] = "layer_comparison.png"
+                #     print("✅ Layer comparison completed")
                     
-                    # Clear memory
-                    import gc
-                    gc.collect()
+                #     # Clear memory
+                #     import gc
+                #     gc.collect()
                     
-                except Exception as e:
-                    print(f"❌ Layer comparison failed: {e}")
-                    import traceback
-                    print(f"Traceback:\n{traceback.format_exc()}")
+                # except Exception as e:
+                #     print(f"❌ Layer comparison failed: {e}")
+                #     import traceback
+                #     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 7. Generate comprehensive report
-                try:
-                    print("📋 Generating comprehensive analysis report...")
-                    attention_analyzer.export_analysis_report(
-                        text=full_input_text,
-                        save_path=os.path.join(entry_dir, "attention_report.md")
-                    )
-                    attention_data["analysis_report"] = "attention_report.md"
-                    print("✅ Analysis report completed")
-                except Exception as e:
-                    print(f"❌ Analysis report failed: {e}")
-                    import traceback
-                    print(f"Traceback:\n{traceback.format_exc()}")
+                # # 7. Generate comprehensive report
+                # try:
+                #     print("📋 Generating comprehensive analysis report...")
+                #     attention_analyzer.export_analysis_report(
+                #         text=full_input_text,
+                #         save_path=os.path.join(entry_dir, "attention_report.md")
+                #     )
+                #     attention_data["analysis_report"] = "attention_report.md"
+                #     print("✅ Analysis report completed")
+                # except Exception as e:
+                #     print(f"❌ Analysis report failed: {e}")
+                #     import traceback
+                #     print(f"Traceback:\n{traceback.format_exc()}")
 
-                # 8. Head specialization analysis (with multiple related texts)
-                try:
-                    print("🎯 Performing head specialization analysis...")
-                    related_texts = [
-                        full_input_text,
-                        f"Patient Note: {patient_note}",
-                        f"Question: {question}",
-                        f"Medical calculation for {row.get('Calculator Name', 'Unknown Calculator')}"
-                    ]
+                # # 8. Head specialization analysis (with multiple related texts)
+                # try:
+                #     print("🎯 Performing head specialization analysis...")
+                #     related_texts = [
+                #         full_input_text,
+                #         f"Patient Note: {patient_note}",
+                #         f"Question: {question}",
+                #         f"Medical calculation for {row.get('Calculator Name', 'Unknown Calculator')}"
+                #     ]
 
-                    head_analysis = attention_visualizer.analyze_head_specialization(
-                        texts=related_texts,
-                        layer=target_layer
-                    )
+                #     head_analysis = attention_visualizer.analyze_head_specialization(
+                #         texts=related_texts,
+                #         layer=target_layer
+                #     )
 
-                    attention_visualizer.plot_head_specialization(
-                        head_analysis,
-                        save_path=os.path.join(entry_dir, "head_specialization.png")
-                    )
-                    attention_data["head_specialization"] = "head_specialization.png"
-                    print("✅ Head specialization analysis completed")
-                except Exception as e:
-                    print(f"❌ Head specialization analysis failed: {e}")
-                    import traceback
-                    print(f"Traceback:\n{traceback.format_exc()}")
+                #     attention_visualizer.plot_head_specialization(
+                #         head_analysis,
+                #         save_path=os.path.join(entry_dir, "head_specialization.png")
+                #     )
+                #     attention_data["head_specialization"] = "head_specialization.png"
+                #     print("✅ Head specialization analysis completed")
+                # except Exception as e:
+                #     print(f"❌ Head specialization analysis failed: {e}")
+                #     import traceback
+                #     print(f"Traceback:\n{traceback.format_exc()}")
 
                 # 9. Save attention analysis summary as JSON
                 try:
@@ -621,12 +621,12 @@ if __name__ == "__main__":
         print(f"LLM results saved to: {llm_output_dir}")
         print(f"Attention visualizations saved to: {attention_output_dir}")
         print("Generated files for each entry:")
-        print("   - basic_attention.html (interactive visualization)")
-        print("   - attention_heatmap.png (static heatmap)")
-        print("   - layer_comparison.png (multi-layer comparison)")
+        # print("   - basic_attention.html (interactive visualization)")
+        # print("   - attention_heatmap.png (static heatmap)")
+        # print("   - layer_comparison.png (multi-layer comparison)")
         print("   - essential_attention_data.npz (compressed attention weights)")
-        print("   - attention_report.md (comprehensive analysis)")
-        print("   - head_specialization.png (head analysis)")
+        # print("   - attention_report.md (comprehensive analysis)")
+        # print("   - head_specialization.png (head analysis)")
         print("   - attention_summary.json (metadata and file list)")
     else:
         print(f"\nProcessing completed!")

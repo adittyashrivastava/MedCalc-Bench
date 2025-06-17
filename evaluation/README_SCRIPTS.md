@@ -40,7 +40,7 @@ This directory contains convenient scripts for running MedCalc-Bench experiments
 
 **Output Structure**:
 ```
-/data/user_data/experiments-{num_examples}/{timestamp}/outputs/
+/data/user_data/hrangara/experiments-{num_examples}/{timestamp}/outputs/
 ├── llm_results/
 │   └── meta-llama_Meta-Llama-3-8B-Instruct_zero_shot.jsonl
 └── attention_results/
@@ -62,7 +62,7 @@ This directory contains convenient scripts for running MedCalc-Bench experiments
 ./run_slurm_debug.sh 25
 
 # Submit job with 50 examples and custom output directory
-./run_slurm_debug.sh 50 /data/user_data/my_experiment
+./run_slurm_debug.sh 50 /data/user_data/hrangara/my_experiment
 ```
 
 **Features**:
@@ -197,7 +197,7 @@ python run.py --model meta-llama/Meta-Llama-3-8B-Instruct --prompt zero_shot \
 #### **Small Experiment (25 examples)**:
 ```bash
 # Direct execution with custom directory
-./run_debug.sh /data/user_data/small_test 25
+./run_debug.sh /data/user_data/hrangara/small_test 25
 
 # SLURM job submission
 ./run_slurm_debug.sh 25
@@ -206,7 +206,7 @@ python run.py --model meta-llama/Meta-Llama-3-8B-Instruct --prompt zero_shot \
 #### **Medium Experiment (100 examples)**:
 ```bash
 # SLURM job submission (recommended for 100+ examples)
-./run_slurm_debug.sh 100 /data/user_data/medium_experiment
+./run_slurm_debug.sh 100 /data/user_data/hrangara/medium_experiment
 
 # Or use parallel processing for faster execution
 ./run_parallel.sh  # Processes 100 examples across 4 parallel jobs
@@ -224,14 +224,14 @@ python run.py --model meta-llama/Meta-Llama-3-8B-Instruct --prompt zero_shot \
 #### **Default Timestamped Output**:
 ```bash
 ./run_debug.sh "" 50
-# Creates: /data/user_data/experiments-50/20241201_143022/outputs/
+# Creates: /data/user_data/hrangara/experiments-50/20241201_143022/outputs/
 ```
 
 #### **Custom Organized Output**:
 ```bash
-./run_slurm_debug.sh 100 /data/user_data/llama3_baseline_experiment
-# Creates: /data/user_data/llama3_baseline_experiment/llm_results/
-#          /data/user_data/llama3_baseline_experiment/attention_results/
+./run_slurm_debug.sh 100 /data/user_data/hrangara/llama3_baseline_experiment
+# Creates: /data/user_data/hrangara/llama3_baseline_experiment/llm_results/
+#          /data/user_data/hrangara/llama3_baseline_experiment/attention_results/
 ```
 
 ### 🔧 Advanced Usage with run.py
@@ -244,7 +244,7 @@ python run.py \
     --enable_attention_analysis \
     --debug_run \
     --num_examples 50 \
-    --output_dir /data/user_data/llama3_70b_oneshot
+    --output_dir /data/user_data/hrangara/llama3_70b_oneshot
 ```
 
 #### **Specific Range Processing**:
@@ -256,7 +256,7 @@ python run.py \
     --start_idx 100 \
     --end_idx 200 \
     --partition_id custom_range \
-    --output_dir /data/user_data/rows_100_200
+    --output_dir /data/user_data/hrangara/rows_100_200
 ```
 
 ## Environment Setup
@@ -310,7 +310,7 @@ To run on a GPU compute node interactively:
 2. **Navigate and run**:
    ```bash
    cd /home/hrangara/MedCalc/MedCalc-Bench/evaluation
-   ./run_debug.sh /data/user_data/interactive_session 50
+   ./run_debug.sh /data/user_data/hrangara/interactive_session 50
    ```
 
 ### Parallel Processing Advantages
@@ -346,7 +346,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate medCalcEnv
 python run.py --model meta-llama/Meta-Llama-3-8B-Instruct --prompt zero_shot \
   --enable_attention_analysis --debug_run --num_examples 25 \
-  --output_dir /data/user_data/manual_run
+  --output_dir /data/user_data/hrangara/manual_run
 ```
 
 **Full run**:

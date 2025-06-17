@@ -38,7 +38,7 @@ cat > "$SLURM_SCRIPT" << EOF
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
-#SBATCH --time=08:00:00
+#SBATCH --time=10:00:00
 #SBATCH --output=logs/${JOB_NAME}_%j.out
 #SBATCH --error=logs/${JOB_NAME}_%j.err
 
@@ -94,7 +94,7 @@ echo "   - Partition: general"
 echo "   - GPU: 1"
 echo "   - CPUs: 4"
 echo "   - Memory: 32G"
-echo "   - Time Limit: 8 hours"
+echo "   - Time Limit: 10 hours"
 echo "   - Examples to process: $NUM_EXAMPLES"
 echo ""
 echo "📝 Monitor job with:"

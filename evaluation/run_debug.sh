@@ -3,7 +3,7 @@
 # MedCalc-Bench Debug Run Script
 # This script runs a debug/test version with limited data for quick testing
 # Usage: ./run_debug.sh [output_directory] [num_examples]
-# If no output directory is provided, defaults to /data/user_data/experiments-{num_examples}/{timestamp}/outputs
+# If no output directory is provided, defaults to /data/user_data/hrangara/experiments-{num_examples}/{timestamp}/outputs
 # If no num_examples is provided, defaults to 10
 
 set -e  # Exit on any error
@@ -22,7 +22,7 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Set output directory - use provided argument or default
 if [ -z "$1" ]; then
-    OUTPUT_DIR="/data/user_data/experiments-${NUM_EXAMPLES}/${TIMESTAMP}/outputs"
+    OUTPUT_DIR="/data/user_data/hrangara/experiments-${NUM_EXAMPLES}/${TIMESTAMP}/outputs"
 else
     OUTPUT_DIR="$1"
 fi
