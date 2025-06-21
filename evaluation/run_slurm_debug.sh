@@ -2,19 +2,32 @@
 
 # MedCalc-Bench SLURM Debug Job Submission Script
 # This script submits a SLURM job to run debug experiments
-# Usage: ./run_slurm_debug.sh [num_examples] [output_directory]
+# Usage: ./run_slurm_debug.sh [num_examples] [output_directory] [time_limit] [prompt_type]
 # If no num_examples is provided, defaults to 10
 # If no output_directory is provided, uses default timestamped directory
+# If no time_limit is provided, defaults to 6:00:00 (6 hours)
+# If no prompt_type is provided, defaults to zero_shot
 
 set -e  # Exit on any error
 
-# Set default number of examples
+# Set default values
 NUM_EXAMPLES=${1:-10}
 OUTPUT_DIR=${2:-""}
+TIME_LIMIT=${3:-"6:00:00"}
+PROMPT_TYPE=${4:-"zero_shot"}
+
+# Validate prompt type
+if [[ ! "$PROMPT_TYPE" =~ ^(zero_shot|one_shot|direct_answer)$ ]]; then
+    echo "❌ Error: Invalid prompt type '$PROMPT_TYPE'"
+    echo "Valid options: zero_shot, one_shot, direct_answer"
+    exit 1
+fi
 
 echo "🚀 MedCalc-Bench SLURM Debug Job Submission"
 echo "==========================================="
 echo "📊 Number of examples: $NUM_EXAMPLES"
+echo "⏰ Time limit: $TIME_LIMIT"
+echo "💡 Prompt type: $PROMPT_TYPE"
 if [ -n "$OUTPUT_DIR" ]; then
     echo "📁 Output directory: $OUTPUT_DIR"
 else
@@ -38,7 +51,7 @@ cat > "$SLURM_SCRIPT" << EOF
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
-#SBATCH --time=10:00:00
+#SBATCH --time=${TIME_LIMIT}
 #SBATCH --output=logs/${JOB_NAME}_%j.out
 #SBATCH --error=logs/${JOB_NAME}_%j.err
 
@@ -51,6 +64,8 @@ echo "Job Name: \$SLURM_JOB_NAME"
 echo "Node: \$SLURMD_NODENAME"
 echo "Started at: \$(date)"
 echo "Number of examples: $NUM_EXAMPLES"
+echo "Time limit: $TIME_LIMIT"
+echo "Prompt type: $PROMPT_TYPE"
 echo "======================================"
 echo ""
 
@@ -60,10 +75,10 @@ cd /home/hrangara/MedCalc/MedCalc-Bench/evaluation
 # Run the debug script with appropriate parameters
 if [ -n "$OUTPUT_DIR" ]; then
     echo "🚀 Running debug script with custom output directory..."
-    ./run_debug.sh "$OUTPUT_DIR" $NUM_EXAMPLES
+    ./run_debug.sh "$OUTPUT_DIR" $NUM_EXAMPLES "$PROMPT_TYPE"
 else
     echo "🚀 Running debug script with default output directory..."
-    ./run_debug.sh "" $NUM_EXAMPLES
+    ./run_debug.sh "" $NUM_EXAMPLES "$PROMPT_TYPE"
 fi
 
 echo ""
@@ -94,7 +109,8 @@ echo "   - Partition: general"
 echo "   - GPU: 1"
 echo "   - CPUs: 4"
 echo "   - Memory: 32G"
-echo "   - Time Limit: 10 hours"
+echo "   - Time Limit: $TIME_LIMIT"
+echo "   - Prompt Type: $PROMPT_TYPE"
 echo "   - Examples to process: $NUM_EXAMPLES"
 echo ""
 echo "📝 Monitor job with:"

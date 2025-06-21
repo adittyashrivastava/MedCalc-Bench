@@ -49,13 +49,29 @@ This directory contains convenient scripts for running MedCalc-Bench experiments
     └── ...
 ```
 
-### 🎯 SLURM Debug Job Script (`run_slurm_debug.sh`) - **NEW**
+### 🎯 SLURM Debug Job Script (`run_slurm_debug.sh`) - **ENHANCED**
 
 **Purpose**: Submit debug experiments as SLURM jobs for better resource management
 
+**Full Usage Syntax**:
+```bash
+./run_slurm_debug.sh [num_examples] [output_directory] [time_limit] [prompt_type]
+```
+
+**Parameters**:
+- `num_examples`: Number of examples to process (default: 10)
+- `output_directory`: Output path (default: timestamped directory)
+- `time_limit`: SLURM time limit in HH:MM:SS format (default: 6:00:00)
+- `prompt_type`: Prompting strategy - zero_shot, one_shot, or direct_answer (default: zero_shot)
+
+**Prompt Types Explained**:
+- **zero_shot**: Model generates answer with reasoning, no examples provided
+- **one_shot**: Model sees one example before generating answer
+- **direct_answer**: Model provides only the final answer without reasoning
+
 **Usage**:
 ```bash
-# Submit job with default 10 examples and timestamped output
+# Submit job with defaults (10 examples, 6 hours, zero_shot)
 ./run_slurm_debug.sh
 
 # Submit job with 25 examples
@@ -63,11 +79,22 @@ This directory contains convenient scripts for running MedCalc-Bench experiments
 
 # Submit job with 50 examples and custom output directory
 ./run_slurm_debug.sh 50 /data/user_data/hrangara/my_experiment
+
+# Submit job with 100 examples, default output, 8 hours time limit
+./run_slurm_debug.sh 100 "" "8:00:00"
+
+# Submit job with 50 examples, custom output, 4 hours, one_shot prompting
+./run_slurm_debug.sh 50 /data/user_data/hrangara/oneshot_experiment "4:00:00" one_shot
+
+# Submit job with 25 examples, default output, default time, direct_answer prompting
+./run_slurm_debug.sh 25 "" "" direct_answer
 ```
 
 **Features**:
 - **SLURM job submission**: Runs on dedicated compute nodes
-- **Resource allocation**: 1 GPU, 4 CPUs, 32GB RAM, 8-hour time limit
+- **Configurable time limits**: Default 6 hours, customizable via parameter
+- **Multiple prompt types**: Supports zero_shot, one_shot, direct_answer
+- **Resource allocation**: 1 GPU, 4 CPUs, 32GB RAM
 - **General partition**: Uses 'general' partition for longer jobs
 - **Comprehensive logging**: Organized log files in `logs/` directory
 - **Job monitoring**: Built-in commands for status checking
@@ -76,7 +103,8 @@ This directory contains convenient scripts for running MedCalc-Bench experiments
 **Job Configuration**:
 - Partition: `general`
 - Resources: 1 GPU, 4 CPUs, 32G memory
-- Time limit: 8 hours
+- Time limit: 6 hours (default, configurable)
+- Prompt types: zero_shot (default), one_shot, direct_answer
 - Log files: `logs/medcalc_debug_{num_examples}_{timestamp}_{job_id}.{out,err}`
 
 **Monitoring Commands** (provided after job submission):
@@ -196,17 +224,17 @@ python run.py --model meta-llama/Meta-Llama-3-8B-Instruct --prompt zero_shot \
 
 #### **Small Experiment (25 examples)**:
 ```bash
-# Direct execution with custom directory
-./run_debug.sh /data/user_data/hrangara/small_test 25
+# Direct execution with custom directory and one_shot prompting
+./run_debug.sh /data/user_data/hrangara/small_test 25 one_shot
 
-# SLURM job submission
-./run_slurm_debug.sh 25
+# SLURM job submission with 4-hour time limit and direct_answer prompting
+./run_slurm_debug.sh 25 "" "4:00:00" direct_answer
 ```
 
 #### **Medium Experiment (100 examples)**:
 ```bash
-# SLURM job submission (recommended for 100+ examples)
-./run_slurm_debug.sh 100 /data/user_data/hrangara/medium_experiment
+# SLURM job submission with 8-hour time limit and one_shot prompting
+./run_slurm_debug.sh 100 /data/user_data/hrangara/medium_experiment "8:00:00" one_shot
 
 # Or use parallel processing for faster execution
 ./run_parallel.sh  # Processes 100 examples across 4 parallel jobs
@@ -223,13 +251,13 @@ python run.py --model meta-llama/Meta-Llama-3-8B-Instruct --prompt zero_shot \
 
 #### **Default Timestamped Output**:
 ```bash
-./run_debug.sh "" 50
+./run_debug.sh "" 50 one_shot
 # Creates: /data/user_data/hrangara/experiments-50/20241201_143022/outputs/
 ```
 
 #### **Custom Organized Output**:
 ```bash
-./run_slurm_debug.sh 100 /data/user_data/hrangara/llama3_baseline_experiment
+./run_slurm_debug.sh 100 /data/user_data/hrangara/llama3_baseline_experiment "6:00:00" zero_shot
 # Creates: /data/user_data/hrangara/llama3_baseline_experiment/llm_results/
 #          /data/user_data/hrangara/llama3_baseline_experiment/attention_results/
 ```

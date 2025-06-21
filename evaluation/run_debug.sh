@@ -2,19 +2,29 @@
 
 # MedCalc-Bench Debug Run Script
 # This script runs a debug/test version with limited data for quick testing
-# Usage: ./run_debug.sh [output_directory] [num_examples]
+# Usage: ./run_debug.sh [output_directory] [num_examples] [prompt_type]
 # If no output directory is provided, defaults to /data/user_data/hrangara/experiments-{num_examples}/{timestamp}/outputs
 # If no num_examples is provided, defaults to 10
+# If no prompt_type is provided, defaults to zero_shot
 
 set -e  # Exit on any error
 
-# Set default number of examples
+# Set default values
 NUM_EXAMPLES=${2:-10}
+PROMPT_TYPE=${3:-"zero_shot"}
+
+# Validate prompt type
+if [[ ! "$PROMPT_TYPE" =~ ^(zero_shot|one_shot|direct_answer)$ ]]; then
+    echo "❌ Error: Invalid prompt type '$PROMPT_TYPE'"
+    echo "Valid options: zero_shot, one_shot, direct_answer"
+    exit 1
+fi
 
 echo "🔧 MedCalc-Bench Debug Run"
 echo "=========================="
 echo "📅 Started at: $(date)"
 echo "📊 Number of examples: $NUM_EXAMPLES"
+echo "💡 Prompt type: $PROMPT_TYPE"
 echo ""
 
 # Generate timestamp for directory naming
@@ -57,7 +67,7 @@ echo ""
 echo "🚀 Starting debug run with attention analysis and ATTRIEVAL..."
 echo "📊 Running on limited dataset (first $NUM_EXAMPLES rows) for testing"
 echo "🔍 Model: meta-llama/Meta-Llama-3-8B-Instruct"
-echo "💡 Prompt: zero_shot"
+echo "💡 Prompt: $PROMPT_TYPE"
 echo "👁️  Attention analysis: ENABLED"
 echo "🎯 ATTRIEVAL fact retrieval: ENABLED"
 echo ""
@@ -65,7 +75,7 @@ echo ""
 # Run the debug version with custom output directory and number of examples
 python run.py \
     --model meta-llama/Meta-Llama-3-8B-Instruct \
-    --prompt zero_shot \
+    --prompt "$PROMPT_TYPE" \
     --enable_attention_analysis \
     --enable_attrieval \
     --debug_run \
