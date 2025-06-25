@@ -73,7 +73,7 @@ echo "🎯 ATTRIEVAL fact retrieval: ENABLED"
 echo ""
 
 # Run the debug version with custom output directory and number of examples
-python run.py \
+python ../run.py \
     --model meta-llama/Meta-Llama-3-8B-Instruct \
     --prompt "$PROMPT_TYPE" \
     --enable_attention_analysis \
@@ -86,4 +86,4 @@ echo ""
 echo "✅ Debug run completed at: $(date)"
 echo "📁 Check $OUTPUT_DIR/llm_results/ for LLM results"
 echo "👁️  Check $OUTPUT_DIR/attention_results/ for attention visualizations"
-echo "🎯 Check $OUTPUT_DIR/attrieval_results/ for ATTRIEVAL fact retrieval analysis" 
+echo "🎯 Check $OUTPUT_DIR/attrieval_results/ for ATTRIEVAL fact retrieval analysis"

@@ -50,7 +50,7 @@ echo "✅ Proceeding with full run..."
 echo ""
 
 # Run the full version
-python run.py \
+python ../run.py \
     --model meta-llama/Meta-Llama-3-8B-Instruct \
     --prompt zero_shot \
     --enable_attention_analysis \
@@ -58,7 +58,7 @@ python run.py \
 
 echo ""
 echo "🎉 Full run completed at: $(date)"
-echo "📁 Check outputs/ directory for results"
-echo "👁️  Check outputs/attention_analysis/ for attention visualizations"
-echo "🎯 Check outputs/attrieval_analysis/ for ATTRIEVAL fact retrieval analysis"
-echo "📊 Full evaluation results with ATTRIEVAL analysis now available" 
+echo "📁 Check ../outputs/ directory for results"
+echo "👁️  Check ../outputs/attention_analysis/ for attention visualizations"
+echo "🎯 Check ../outputs/attrieval_analysis/ for ATTRIEVAL fact retrieval analysis"
+echo "📊 Full evaluation results with ATTRIEVAL analysis now available"

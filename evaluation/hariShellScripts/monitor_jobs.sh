@@ -13,10 +13,10 @@ done
 
 echo ""
 echo "📁 Output Files:"
-ls -la outputs/*partition*.jsonl 2>/dev/null || echo "  No partition output files found yet"
+ls -la ../outputs/*partition*.jsonl 2>/dev/null || echo "  No partition output files found yet"
 
 echo ""
 echo "🔍 Recent Log Activity:"
-find logs -name "medcalc_p*_*.out" -newer logs 2>/dev/null | head -5 | while read logfile; do
+find ../logs -name "medcalc_p*_*.out" -newer ../logs 2>/dev/null | head -5 | while read logfile; do
     echo "  $logfile: $(tail -1 "$logfile" 2>/dev/null || echo "empty")"
 done

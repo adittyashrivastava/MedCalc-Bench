@@ -26,10 +26,10 @@ cd /home/hrangara/MedCalc/MedCalc-Bench/evaluation
 # Run the debug script with appropriate parameters
 if [ -n "" ]; then
     echo "🚀 Running debug script with custom output directory..."
-    ./run_debug.sh "" 150
+    ./hariShellScripts/run_debug.sh "" 150
 else
     echo "🚀 Running debug script with default output directory..."
-    ./run_debug.sh "" 150
+    ./hariShellScripts/run_debug.sh "" 150
 fi
 
 echo ""

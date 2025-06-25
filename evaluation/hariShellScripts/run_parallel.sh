@@ -48,8 +48,8 @@ echo "✅ Environment activated: $CONDA_DEFAULT_ENV"
 echo ""
 
 echo "📊 Step 1: Partitioning dataset..."
-python partition_dataset.py \
-    --dataset ../dataset/test_data.csv \
+python ../partition_dataset.py \
+    --dataset ../../dataset/test_data.csv \
     --num_partitions $NUM_PARTITIONS \
     --max_examples $MAX_EXAMPLES \
     --output_dir partitions
@@ -66,34 +66,34 @@ echo ""
 echo "🎯 Step 2: Creating and submitting parallel jobs..."
 
 # Create jobs directory
-mkdir -p jobs
-mkdir -p logs
+mkdir -p ../jobs
+mkdir -p ../logs
 
 # Read partition information and create job scripts
 JOB_IDS=()
 
 for i in $(seq 0 $((NUM_PARTITIONS-1))); do
     PARTITION_ID=$(printf "p%02d" $i)
-    
+
     # Calculate start and end indices for this partition
     EXAMPLES_PER_PARTITION=$(( (MAX_EXAMPLES + NUM_PARTITIONS - 1) / NUM_PARTITIONS ))
     START_IDX=$((i * EXAMPLES_PER_PARTITION))
     END_IDX=$(( (i + 1) * EXAMPLES_PER_PARTITION ))
-    
+
     # Don't exceed max examples
     if [ $END_IDX -gt $MAX_EXAMPLES ]; then
         END_IDX=$MAX_EXAMPLES
     fi
-    
+
     # Skip if start index is beyond max examples
     if [ $START_IDX -ge $MAX_EXAMPLES ]; then
         continue
     fi
-    
-    JOB_SCRIPT="jobs/job_${PARTITION_ID}.sh"
-    
+
+        JOB_SCRIPT="../jobs/job_${PARTITION_ID}.sh"
+
     echo "Creating job script: $JOB_SCRIPT (rows $START_IDX-$((END_IDX-1)))"
-    
+
     # Create the job script
     cat > "$JOB_SCRIPT" << EOF
 #!/bin/bash
@@ -152,15 +152,15 @@ EOF
 
     # Make the job script executable
     chmod +x "$JOB_SCRIPT"
-    
+
     # Submit the job
     echo "Submitting job for partition $PARTITION_ID..."
     JOB_ID=$(sbatch "$JOB_SCRIPT" | awk '{print $4}')
     JOB_IDS+=($JOB_ID)
-    
+
     echo "  Job ID: $JOB_ID"
-    echo "  Log files: logs/medcalc_${PARTITION_ID}_${JOB_ID}.{out,err}"
-    
+    echo "  Log files: ../logs/medcalc_${PARTITION_ID}_${JOB_ID}.{out,err}"
+
 done
 
 echo ""
@@ -177,7 +177,7 @@ echo "🔍 Monitoring Commands:"
 echo "  Check job status:    squeue -u \$USER"
 echo "  Check specific jobs: squeue -j $(IFS=,; echo "${JOB_IDS[*]}")"
 echo "  Cancel all jobs:     scancel $(IFS=' '; echo "${JOB_IDS[*]}")"
-echo "  View logs:           tail -f logs/medcalc_p*_*.out"
+echo "  View logs:           tail -f ../logs/medcalc_p*_*.out"
 echo ""
 
 # Step 4: Create monitoring script
@@ -198,11 +198,11 @@ done
 
 echo ""
 echo "📁 Output Files:"
-ls -la outputs/*partition*.jsonl 2>/dev/null || echo "  No partition output files found yet"
+ls -la ../outputs/*partition*.jsonl 2>/dev/null || echo "  No partition output files found yet"
 
 echo ""
 echo "🔍 Recent Log Activity:"
-find logs -name "medcalc_p*_*.out" -newer logs 2>/dev/null | head -5 | while read logfile; do
+find ../logs -name "medcalc_p*_*.out" -newer ../logs 2>/dev/null | head -5 | while read logfile; do
     echo "  \$logfile: \$(tail -1 "\$logfile" 2>/dev/null || echo "empty")"
 done
 EOF
@@ -226,24 +226,24 @@ import glob
 import os
 import argparse
 
-def merge_partition_results(pattern="outputs/*partition*.jsonl", output_file=None):
+def merge_partition_results(pattern="../outputs/*partition*.jsonl", output_file=None):
     """Merge all partition result files into a single file"""
-    
+
     # Find all partition files
     partition_files = glob.glob(pattern)
-    
+
     if not partition_files:
         print(f"❌ No partition files found matching pattern: {pattern}")
         return
-    
+
     print(f"📁 Found {len(partition_files)} partition files:")
     for f in sorted(partition_files):
         print(f"  {f}")
-    
+
     # Read and combine all files
     all_results = []
     total_rows = 0
-    
+
     for file_path in sorted(partition_files):
         try:
             df = pd.read_json(file_path, lines=True)
@@ -252,17 +252,17 @@ def merge_partition_results(pattern="outputs/*partition*.jsonl", output_file=Non
             print(f"  ✅ {file_path}: {len(df)} rows")
         except Exception as e:
             print(f"  ❌ {file_path}: Error - {e}")
-    
+
     if not all_results:
         print("❌ No valid partition files to merge")
         return
-    
+
     # Combine all dataframes
     combined_df = pd.concat(all_results, ignore_index=True)
-    
+
     # Sort by Row Number to maintain order
     combined_df = combined_df.sort_values('Row Number').reset_index(drop=True)
-    
+
     # Generate output filename if not provided
     if output_file is None:
         # Extract model and prompt info from first partition file
@@ -273,16 +273,16 @@ def merge_partition_results(pattern="outputs/*partition*.jsonl", output_file=Non
             # More generic removal
             parts = base_name.split('_partition_')
             base_name = parts[0] + '.jsonl'
-        output_file = f"outputs/merged_{base_name}"
-    
+        output_file = f"../outputs/merged_{base_name}"
+
     # Save merged results
     combined_df.to_json(output_file, orient='records', lines=True)
-    
+
     print(f"\n✅ Merged results saved to: {output_file}")
     print(f"📊 Total rows: {total_rows}")
     print(f"🎯 Unique calculators: {combined_df['Calculator ID'].nunique()}")
     print(f"📝 Unique notes: {combined_df['Note ID'].nunique()}")
-    
+
     # Show accuracy summary if available
     if 'Result' in combined_df.columns:
         correct = (combined_df['Result'] == 'Correct').sum()
@@ -292,11 +292,11 @@ def merge_partition_results(pattern="outputs/*partition*.jsonl", output_file=Non
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Merge parallel processing results")
-    parser.add_argument("--pattern", default="outputs/*partition*.jsonl", 
+    parser.add_argument("--pattern", default="../outputs/*partition*.jsonl",
                        help="Pattern to match partition files")
     parser.add_argument("--output", default=None,
                        help="Output file name (auto-generated if not specified)")
-    
+
     args = parser.parse_args()
     merge_partition_results(args.pattern, args.output)
 EOF
@@ -313,4 +313,4 @@ echo "Next steps:"
 echo "1. Monitor jobs: ./$MONITOR_SCRIPT"
 echo "2. Wait for completion (check with: squeue -u \$USER)"
 echo "3. Merge results: python $MERGE_SCRIPT"
-echo "4. Check final results in outputs/merged_*.jsonl" 
+echo "4. Check final results in ../outputs/merged_*.jsonl"

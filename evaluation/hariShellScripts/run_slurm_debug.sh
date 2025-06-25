@@ -75,10 +75,10 @@ cd /home/hrangara/MedCalc/MedCalc-Bench/evaluation
 # Run the debug script with appropriate parameters
 if [ -n "$OUTPUT_DIR" ]; then
     echo "🚀 Running debug script with custom output directory..."
-    ./run_debug.sh "$OUTPUT_DIR" $NUM_EXAMPLES "$PROMPT_TYPE"
+    ./hariShellScripts/run_debug.sh "$OUTPUT_DIR" $NUM_EXAMPLES "$PROMPT_TYPE"
 else
     echo "🚀 Running debug script with default output directory..."
-    ./run_debug.sh "" $NUM_EXAMPLES "$PROMPT_TYPE"
+    ./hariShellScripts/run_debug.sh "" $NUM_EXAMPLES "$PROMPT_TYPE"
 fi
 
 echo ""
@@ -88,7 +88,7 @@ echo "======================================"
 EOF
 
 # Create logs directory if it doesn't exist
-mkdir -p logs
+mkdir -p ../logs
 
 # Make the SLURM script executable
 chmod +x "$SLURM_SCRIPT"
@@ -118,8 +118,8 @@ echo "   squeue -u \$USER"
 echo "   squeue -j $JOB_ID"
 echo ""
 echo "📄 Check logs:"
-echo "   tail -f logs/${JOB_NAME}_${JOB_ID}.out"
-echo "   tail -f logs/${JOB_NAME}_${JOB_ID}.err"
+echo "   tail -f ../logs/${JOB_NAME}_${JOB_ID}.out"
+echo "   tail -f ../logs/${JOB_NAME}_${JOB_ID}.err"
 echo ""
 echo "❌ Cancel job if needed:"
 echo "   scancel $JOB_ID"
@@ -128,4 +128,4 @@ echo "   scancel $JOB_ID"
 # Uncomment the following lines if you want auto-cleanup
 # echo ""
 # echo "🧹 SLURM script will be cleaned up in 60 seconds..."
-# (sleep 60 && rm -f "$SLURM_SCRIPT" && echo "🗑️  Cleaned up $SLURM_SCRIPT") & 
+# (sleep 60 && rm -f "$SLURM_SCRIPT" && echo "🗑️  Cleaned up $SLURM_SCRIPT") &
