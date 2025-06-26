@@ -27,17 +27,55 @@ from attention_viz.utils.helpers import load_model_and_tokenizer
 
 # Load formula catalogue
 def load_formula_catalogue():
-    """Load the formula catalogue from formula_catalogue.txt"""
+    """Load the formula catalogue from formula_catalogue.json"""
     try:
-        with open("formula_catalogue.txt", "r") as f:
-            catalogue_content = f.read()
-        return f"\n\nMEDICAL FORMULA CATALOGUE:\nFor reference, here are commonly used medical formulas and calculations:\n{catalogue_content}"
+        import json
+        with open("formula_catalogue.json", "r") as f:
+            catalogue_data = json.load(f)
+        return catalogue_data
     except FileNotFoundError:
-        print("Warning: formula_catalogue.txt not found. Continuing without formula catalogue.")
-        return ""
+        print("Warning: formula_catalogue.json not found. Continuing without formula catalogue.")
+        return {}
     except Exception as e:
         print(f"Warning: Could not load formula catalogue: {e}")
+        return {}
+
+
+def pick_formula_from_question(question: str, formula_catalogue: dict):
+    """Return (task_name, formula) by fuzzy keyword matching in the question."""
+    if not formula_catalogue:
+        return None, None
+
+    q = question.lower()
+
+    # Search through all formulas and their aliases
+    for formula_key, formula_data in formula_catalogue.items():
+        # Check if any alias matches keywords in the question
+        aliases = formula_data.get("aliases", [])
+        for alias in aliases:
+            if alias.lower() in q:
+                return formula_data["title"], formula_data["formula"]
+
+    return None, None
+
+
+def format_formula_for_prompt(task_name: str, formula: str):
+    """Format a selected formula for inclusion in system prompts"""
+    if not task_name or not formula:
         return ""
+
+    return (
+        f"\n\nMEDICAL FORMULA REFERENCE:\n"
+        f"Task: {task_name}\n"
+        f"Use this exact computation formula and no other:\n\n"
+        f"    {formula}\n\n"
+        "INSTRUCTIONS:\n"
+        "1. Restate the formula.\n"
+        "2. Extract every required value from the patient note or the question "
+        "(quote the numbers you use).\n"
+        "3. Substitute the values into the formula and show the arithmetic.\n"
+        "4. Compute the final result.\n"
+    )
 
 
 def zero_shot(note, question, formula_catalogue=""):
@@ -203,12 +241,12 @@ if __name__ == "__main__":
     enable_formula_catalogue = args.enable_formula_catalogue
 
     # Load formula catalogue if enabled
-    formula_catalogue_content = ""
+    formula_catalogue_data = {}
     if enable_formula_catalogue:
         print("📚 Loading medical formula catalogue...")
-        formula_catalogue_content = load_formula_catalogue()
-        if formula_catalogue_content:
-            print("✅ Formula catalogue loaded successfully")
+        formula_catalogue_data = load_formula_catalogue()
+        if formula_catalogue_data:
+            print(f"✅ Formula catalogue loaded successfully ({len(formula_catalogue_data)} formulas)")
         else:
             print("⚠️  Formula catalogue could not be loaded")
     else:
@@ -363,8 +401,16 @@ if __name__ == "__main__":
 
         if "pmc_llama" in model_name.lower():
             patient_note = llm.tokenizer.decode(llm.tokenizer.encode(patient_note, add_special_tokens=False)[:256])
+        # Pick relevant formula based on question
+        formula_content = ""
+        if enable_formula_catalogue and formula_catalogue_data:
+            task_name, formula = pick_formula_from_question(question, formula_catalogue_data)
+            formula_content = format_formula_for_prompt(task_name, formula)
+            if formula_content:
+                print(f"🧮 Selected formula: {task_name}")
+
         if prompt_style == "zero_shot":
-            system, user = zero_shot(patient_note, question, formula_catalogue_content)
+            system, user = zero_shot(patient_note, question, formula_content)
         elif prompt_style == "one_shot":
             example = one_shot_json[calculator_id]
             if "meditron" in model_name.lower():
@@ -373,9 +419,9 @@ if __name__ == "__main__":
             elif "pmc_llama" in model_name.lower():
                 example["Patient Note"] = llm.tokenizer.decode(llm.tokenizer.encode(example["Patient Note"], add_special_tokens=False)[:256])
                 example["Response"]["step_by_step_thinking"] = llm.tokenizer.decode(llm.tokenizer.encode(example["Response"]["step_by_step_thinking"], add_special_tokens=False)[:256])
-            system, user = one_shot(patient_note, question, example["Patient Note"], {"step_by_step_thinking": example["Response"]["step_by_step_thinking"], "answer": example["Response"]["answer"]}, formula_catalogue_content)
+            system, user = one_shot(patient_note, question, example["Patient Note"], {"step_by_step_thinking": example["Response"]["step_by_step_thinking"], "answer": example["Response"]["answer"]}, formula_content)
         elif prompt_style == "direct_answer":
-            system, user = direct_answer(patient_note, question, formula_catalogue_content)
+            system, user = direct_answer(patient_note, question, formula_content)
 
         print("System:\n", system)
         print("User:\n", user)

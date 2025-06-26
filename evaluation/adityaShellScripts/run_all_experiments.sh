@@ -2,12 +2,13 @@
 
 # Check if model parameter is provided
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <model_name> [partition] [time_limit] [memory]"
+    echo "Usage: $0 <model_name> [partition] [time_limit] [memory] [options...]"
     echo ""
     echo "Examples:"
     echo "  $0 Qwen/Qwen2.5-7B-Instruct"
     echo "  $0 Qwen/Qwen2.5-14B-Instruct general 24:00:00 64G"
-    echo "  $0 meta-llama/Meta-Llama-3-8B-Instruct"
+    echo "  $0 meta-llama/Meta-Llama-3-8B-Instruct general 12:00:00 32G --enable_attention_analysis --enable_formula_catalogue"
+    echo "  $0 meta-llama/Meta-Llama-3-8B-Instruct general 12:00:00 32G --debug_run --num_examples 50"
     echo ""
     echo "Supported models:"
     echo "  - Qwen/Qwen2.5-7B-Instruct"
@@ -26,6 +27,17 @@ if [ $# -eq 0 ]; then
     echo "  partition   : Optional - SLURM partition (default: general)"
     echo "  time_limit  : Optional - Job time limit (default: 12:00:00)"
     echo "  memory      : Optional - Memory allocation (default: 32G)"
+    echo ""
+    echo "Optional run.py flags (pass after the 4 main parameters):"
+    echo "  --enable_attention_analysis  : Enable attention analysis"
+    echo "  --enable_attrieval          : Enable ATTRIEVAL analysis"
+    echo "  --enable_formula_catalogue  : Enable medical formula catalogue"
+    echo "  --debug_run                 : Run in debug mode (limited examples)"
+    echo "  --num_examples N            : Number of examples to process in debug mode"
+    echo "  --output_dir DIR            : Custom output directory"
+    echo ""
+    echo "Example with all options:"
+    echo "  $0 meta-llama/Meta-Llama-3-8B-Instruct general 12:00:00 32G --enable_attention_analysis --enable_attrieval --enable_formula_catalogue --debug_run --num_examples 100 --output_dir /custom/path"
     exit 1
 fi
 
@@ -34,6 +46,10 @@ MODEL="$1"
 PARTITION="${2:-general}"
 TIME_LIMIT="${3:-12:00:00}"
 MEMORY="${4:-32G}"
+
+# Collect additional arguments (run.py flags)
+shift 4 2>/dev/null || shift $#  # Remove first 4 args if they exist, otherwise remove all
+ADDITIONAL_ARGS="$@"
 
 # Extract model name for job naming (replace slashes and special chars)
 MODEL_SAFE=$(echo "$MODEL" | sed 's/[^a-zA-Z0-9._-]/_/g')
@@ -67,6 +83,9 @@ echo "Model: ${MODEL}"
 echo "Partition: ${PARTITION}"
 echo "Time Limit: ${TIME_LIMIT}"
 echo "Memory: ${MEMORY}"
+if [ -n "${ADDITIONAL_ARGS}" ]; then
+    echo "Additional Arguments: ${ADDITIONAL_ARGS}"
+fi
 echo "========================================="
 
 # Set up conda environment
@@ -159,6 +178,9 @@ nvidia-smi
 # Model configuration
 MODEL="${MODEL}"
 
+# Additional arguments for run.py
+ADDITIONAL_ARGS="${ADDITIONAL_ARGS}"
+
 # Array of prompt types
 PROMPTS=("zero_shot" "direct_answer" "one_shot")
 
@@ -166,6 +188,9 @@ echo ""
 echo "========================================="
 echo "Starting experiments for model: \$MODEL"
 echo "Prompt types: \${PROMPTS[@]}"
+if [ -n "\$ADDITIONAL_ARGS" ]; then
+    echo "Additional arguments: \$ADDITIONAL_ARGS"
+fi
 echo "========================================="
 
 # Run experiments for each prompt type
@@ -176,8 +201,16 @@ for PROMPT in "\${PROMPTS[@]}"; do
     echo "Time: \$(date)"
     echo "========================================="
 
+    # Build the command with additional arguments
+    CMD="python run.py --model \"\$MODEL\" --prompt \"\$PROMPT\""
+    if [ -n "\$ADDITIONAL_ARGS" ]; then
+        CMD="\$CMD \$ADDITIONAL_ARGS"
+    fi
+
+    echo "Running command: \$CMD"
+
     # Run the experiment
-    python ../run.py --model "\$MODEL" --prompt "\$PROMPT"
+    eval \$CMD
 
     # Check if the experiment completed successfully
     if [ \$? -eq 0 ]; then
@@ -245,6 +278,9 @@ echo "Model: $MODEL"
 echo "Partition: $PARTITION"
 echo "Time Limit: $TIME_LIMIT"
 echo "Memory: $MEMORY"
+if [ -n "${ADDITIONAL_ARGS}" ]; then
+    echo "Additional Arguments: ${ADDITIONAL_ARGS}"
+fi
 echo ""
 echo "To submit the job:"
 echo "  sbatch ../jobs/medcalc_experiment_${MODEL_SAFE}.sh"

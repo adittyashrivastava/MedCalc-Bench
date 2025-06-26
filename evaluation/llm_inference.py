@@ -37,7 +37,7 @@ try:
 except Exception as e:
     print(f"⚠️ HF authentication issue: {e}, continuing anyway...")
 
-openai.api_key = os.getenv("OPENAI_API_KEY") 
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class LLMInference:
 
@@ -68,6 +68,8 @@ class LLMInference:
             elif "pmc_llama" in llm_name.lower():
                 self.tokenizer.chat_template = open('../templates/pmc_llama.jinja').read().replace('    ', '').replace('\n', '')
                 self.max_length = 2048
+            elif "qwen" in llm_name.lower():
+                self.max_length = 32768  # Qwen2.5 supports up to 32k context length
             self.model = transformers.pipeline(
                 "text-generation",
                 model=self.llm_name,
@@ -80,8 +82,8 @@ class LLMInference:
         # generate answers
 
         ans = self.generate(messages)
-        ans = re.sub("\s+", " ", ans)
-        
+        ans = re.sub(r"\s+", " ", ans)
+
         return ans
 
     def custom_stop(self, stop_str, input_len=0):
@@ -141,4 +143,4 @@ class CustomStoppingCriteria(StoppingCriteria):
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
         tokens = self.tokenizer.decode(input_ids[0][self.input_len:])
-        return any(stop in tokens for stop in self.stops_words)    
+        return any(stop in tokens for stop in self.stops_words)

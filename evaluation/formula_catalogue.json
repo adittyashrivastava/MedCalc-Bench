@@ -1,0 +1,217 @@
+{
+    "creatinine_clearance": {
+        "title": "Creatinine Clearance (Cockcroft-Gault Equation)",
+        "formula": "CrCl = ((140 − age) × adjusted weight × gender_coeff) / (serum creatinine × 72)",
+        "aliases": ["creatinine clearance", "cockcroft", "cg"]
+    },
+    "egfr": {
+        "title": "CKD-EPI Equation for GFR",
+        "formula": "eGFR = 142 × (Scr/A)^B × 0.9938^age × gender_coeff  (A = 0.7 or 0.9; B = −0.241 or −0.302)",
+        "aliases": ["egfr", "ckd-epi", "ckd epi"]
+    },
+    "mdrd": {
+        "title": "MDRD GFR Equation",
+        "formula": "GFR = 175 × Scr^(−1.154) × age^(−0.203) × race_coeff × gender_coeff",
+        "aliases": ["mdrd"]
+    },
+    "cystatin": {
+        "title": "CKD-EPI (Cystatin-C) eGFR",
+        "formula": "eGFR = 133 × (Scys/0.8)^(−0.499) × 0.996^age × gender_coeff",
+        "aliases": ["cystatin"]
+    },
+    "maintenance_fluids": {
+        "title": "Maintenance Fluids Calculation",
+        "formula": "Rate (mL/day) = 100 mL × first 10 kg + 50 mL × next 10 kg + 20 mL × every kg > 20",
+        "aliases": ["maintenance fluids"]
+    },
+    "mean_arterial_pressure": {
+        "title": "Mean Arterial Pressure (MAP)",
+        "formula": "MAP = (2 × DBP + SBP) / 3",
+        "aliases": ["mean arterial pressure", "map"]
+    },
+    "qtc_bazett": {
+        "title": "QTc Bazett Calculator",
+        "formula": "QTc_Bazett = QT_ms / √RR_s",
+        "aliases": ["qtc bazett", "bazett"]
+    },
+    "qtc_fridericia": {
+        "title": "QTc Fridericia Calculator",
+        "formula": "QTc_Fridericia = QT_ms / RR_s^(1/3)",
+        "aliases": ["qtc fridericia", "fridericia"]
+    },
+    "qtc_framingham": {
+        "title": "QTc Framingham Calculator",
+        "formula": "QTc_Framingham = QT_ms + 0.154 × (1 − RR_s) × 1000",
+        "aliases": ["qtc framingham", "framingham"]
+    },
+    "qtc_hodges": {
+        "title": "QTc Hodges Calculator",
+        "formula": "QTc_Hodges = QT_ms + 1.75 × (HR_bpm − 60)",
+        "aliases": ["qtc hodges", "hodges"]
+    },
+    "qtc_rautaharju": {
+        "title": "QTc Rautaharju Calculator",
+        "formula": "QTc_Rautaharju = QT_ms + 0.275 × (1 − RR_s) × 1000",
+        "aliases": ["qtc rautaharju", "rautaharju"]
+    },
+    "cha2ds2": {
+        "title": "CHA₂DS₂-VASc Stroke Risk Score",
+        "formula": "Score = CHF (1)+HTN (1)+Age ≥ 75 (2)+DM (1)+Stroke/TIA (2)+Vascular (1)+Age 65-74 (1)+Female (1)",
+        "aliases": ["cha2ds2", "stroke risk"]
+    },
+    "has_bled": {
+        "title": "HAS-BLED Bleeding Risk Score",
+        "formula": "Score = HTN(1)+Abnormal renal/liver(1 or 2)+Stroke(1)+Bleed(1)+Labile INR(1)+Elderly >65(1)+Drugs/Alcohol(1 or 2)",
+        "aliases": ["has- bled", "hasbled"]
+    },
+    "rcri": {
+        "title": "Revised Cardiac Risk Index (Lee)",
+        "formula": "Score = High-risk surgery + History of IHD + CHF + Cerebrovascular Dx + Insulin-therapy DM + Cr > 2 mg/dL",
+        "aliases": ["rcri", "lee index"]
+    },
+    "heart_score": {
+        "title": "HEART Score for Major Cardiac Events",
+        "formula": "Score = History(0-2)+ECG(0-2)+Age(0-2)+Risk-factors(0-2)+Troponin(0-2)",
+        "aliases": ["heart score"]
+    },
+    "wells_pe": {
+        "title": "Wells' Criteria for Pulmonary Embolism",
+        "formula": "Score = Clinical DVT (3) + PE primary dx (3) + HR > 100 (1.5) + Immobilization/Surgery (1.5) + Previous DVT/PE (1.5) + Hemoptysis (1) + Cancer (1)",
+        "aliases": ["wells pulmonary embolism", "pe wells"]
+    },
+    "wells_dvt": {
+        "title": "Wells' Criteria for DVT",
+        "formula": "Score = Cancer (1)+Paralysis/Cast (1)+Bedridden/Surgery (1)+Tenderness (1)+Swelling whole leg (1)+Calf > 3 cm (1)+Pitting edema (1)+Collateral veins (1) – Alt dx (2)",
+        "aliases": ["wells dvt", "dvt wells"]
+    },
+    "geneva": {
+        "title": "Revised Geneva Score (PE)",
+        "formula": "Score = Age > 65(1)+Previous DVT/PE(3)+Surgery/Fracture <1 mo(2)+Active malignancy(2)+Uni-lateral lower-limb pain(3)+Hemoptysis(2)+HR > 75( tachy-tiers )+Pain on palpation + one-leg edema(4)",
+        "aliases": ["geneva"]
+    },
+    "child_pugh": {
+        "title": "Child-Pugh Score",
+        "formula": "Score = Encephalopathy(1-3)+Ascites(1-3)+Bilirubin(1-3)+Albumin(1-3)+INR/PT(1-3)",
+        "aliases": ["child-pugh"]
+    },
+    "meld_na": {
+        "title": "MELD-Na (UNOS/OPTN)",
+        "formula": "MELD-Na = MELD(i) – Na – [0.025 × MELD(i) × (140 – Na)] + 140, where MELD(i) = 0.957 × ln(Cr) + 0.378 × ln(Bili) + 1.12 × ln(INR) + 0.643",
+        "aliases": ["meld-na", "meld na"]
+    },
+    "fib_4": {
+        "title": "Fibrosis-4 (FIB-4) Index",
+        "formula": "FIB-4 = (Age × AST) / (Platelets × √ALT)",
+        "aliases": ["fib-4", "fibrosis-4"]
+    },
+    "bmi": {
+        "title": "Body Mass Index (BMI)",
+        "formula": "BMI = Weight_kg / Height_m²",
+        "aliases": ["bmi", "body mass index"]
+    },
+    "ibw": {
+        "title": "Ideal Body Weight (Devine)",
+        "formula": "IBW_male = 50 kg + 2.3 kg × (Height_in – 60); IBW_female = 45.5 kg + 2.3 kg × (Height_in – 60)",
+        "aliases": ["ibw", "ideal body weight", "devine"]
+    },
+    "adjusted_body_weight": {
+        "title": "Adjusted Body Weight",
+        "formula": "AdjBW = IBW + 0.4 × (ActualBW – IBW)",
+        "aliases": ["adjusted body weight", "abw"]
+    },
+    "body_surface_area": {
+        "title": "Body Surface Area (DuBois)",
+        "formula": "BSA = 0.007184 × Height_cm^0.725 × Weight_kg^0.425",
+        "aliases": ["body surface area", "bsa"]
+    },
+    "calcium_correction": {
+        "title": "Calcium Correction for Hypoalbuminemia",
+        "formula": "Corrected Ca = Serum Ca + 0.8 × (4.0 – Albumin_g/dL)",
+        "aliases": ["calcium correction", "corrected calcium"]
+    },
+    "sodium_correction": {
+        "title": "Sodium Correction for Hyperglycemia",
+        "formula": "Corrected Na = Measured Na + 1.6 × ((Glucose_mg/dL – 100)/100)",
+        "aliases": ["sodium correction", "hyperglycemia", "corrected sodium"]
+    },
+    "anion_gap": {
+        "title": "Albumin-Corrected Anion Gap",
+        "formula": "AG_corrected = AG_measured + 2.5 × (4.0 – Albumin_g/dL)",
+        "aliases": ["anion gap"]
+    },
+    "delta_gap": {
+        "title": "Delta Gap",
+        "formula": "ΔGap = (AG_measured – 12) – (24 – HCO₃⁻)",
+        "aliases": ["delta gap"]
+    },
+    "delta_ratio": {
+        "title": "Delta Ratio",
+        "formula": "ΔRatio = (AG_measured – 12) / (24 – HCO₃⁻)",
+        "aliases": ["delta ratio"]
+    },
+    "estimated_due_date": {
+        "title": "Estimated Due Date (Naegele)",
+        "formula": "EDD = Date_of_LMP + 280 days",
+        "aliases": ["estimated due date", "edd", "naegele"]
+    },
+    "estimated_gestational_age": {
+        "title": "Estimated Gestational Age",
+        "formula": "EGA_weeks = (Current_Date – Date_of_LMP) / 7",
+        "aliases": ["estimated gestational age", "ega"]
+    },
+    "estimated_conception": {
+        "title": "Estimated Date of Conception",
+        "formula": "EDC = EDD – 266 days",
+        "aliases": ["estimated conception"]
+    },
+    "sirs": {
+        "title": "SIRS Criteria",
+        "formula": "SIRS ≥ 2 of (T < 36 or > 38, HR > 90, RR > 20 or PaCO₂ < 32, WBC < 4 or > 12 or > 10% bands)",
+        "aliases": ["sirs"]
+    },
+    "qsofa": {
+        "title": "qSOFA Score",
+        "formula": "qSOFA = Altered Mental(1) + SBP ≤ 100(1) + RR ≥ 22(1)",
+        "aliases": ["qsofa"]
+    },
+    "shock_index": {
+        "title": "Shock Index",
+        "formula": "Shock_Index = HeartRate_bpm / SystolicBP_mmHg",
+        "aliases": ["shock index"]
+    },
+    "gcs": {
+        "title": "Glasgow Coma Scale",
+        "formula": "GCS = Eye(1-4) + Verbal(1-5) + Motor(1-6)",
+        "aliases": ["gcs", "glasgow coma"]
+    },
+    "mme": {
+        "title": "Morphine Milligram Equivalents",
+        "formula": "Total_MME = Σ(Dose_mg × ConversionFactor)",
+        "aliases": ["mme", "morphine milligram equivalents"]
+    },
+    "aa_gradient": {
+        "title": "A-a Oxygen Gradient",
+        "formula": "A-a = PAO₂ – PaO₂, where PAO₂ = FiO₂ × (Patm – PH₂O) – PaCO₂/0.8",
+        "aliases": ["aa gradient", "alveolar"]
+    },
+    "albumin_corrected_delta_ratio": {
+        "title": "Albumin-Corrected Delta Ratio",
+        "formula": "ΔRatio_corr = (AG_corr – 12) / (24 – HCO₃⁻)",
+        "aliases": ["albumin corrected delta ratio"]
+    },
+    "target_weight": {
+        "title": "Target Weight",
+        "formula": "Target Weight = DryWeight + (Current Weight – DryWeight) × Dialysis UF_Goal",
+        "aliases": ["target weight"]
+    },
+    "curb_65": {
+        "title": "CURB-65 Pneumonia Severity Score",
+        "formula": "Score = Confusion(1) + Urea > 7 mmol/L(1) + RR ≥ 30(1) + SBP < 90 or DBP ≤ 60(1) + Age ≥ 65(1)",
+        "aliases": ["curb-65"]
+    },
+    "psi": {
+        "title": "PSI / PORT Score",
+        "formula": "Composite points from 20 demographic, comorbidity, examination & lab variables",
+        "aliases": ["psi", "pneumonia severity index"]
+    }
+}
