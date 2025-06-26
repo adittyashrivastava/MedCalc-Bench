@@ -30,7 +30,12 @@ def load_formula_catalogue():
     """Load the formula catalogue from formula_catalogue.json"""
     try:
         import json
-        with open("formula_catalogue.json", "r") as f:
+        import os
+        # Get the script directory to handle relative paths correctly
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        formula_file = os.path.join(script_dir, "formula_catalogue.json")
+
+        with open(formula_file, "r") as f:
             catalogue_data = json.load(f)
         return catalogue_data
     except FileNotFoundError:
@@ -365,10 +370,16 @@ if __name__ == "__main__":
                 enable_attention = False
                 enable_attrieval = False
 
-    with open("one_shot_finalized_explanation.json", "r") as file:
+    # Get the script directory to handle relative paths correctly
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    one_shot_file = os.path.join(script_dir, "one_shot_finalized_explanation.json")
+
+    with open(one_shot_file, "r") as file:
         one_shot_json = json.load(file)
 
-    df = pd.read_csv("../dataset/test_data.csv")
+    # Use script directory to build dataset path correctly
+    dataset_file = os.path.join(script_dir, "../dataset/test_data.csv")
+    df = pd.read_csv(dataset_file)
 
     # Handle different processing modes
     if args.debug_run:

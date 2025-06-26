@@ -202,7 +202,7 @@ for PROMPT in "\${PROMPTS[@]}"; do
     echo "========================================="
 
     # Build the command with additional arguments
-    CMD="python run.py --model \"\$MODEL\" --prompt \"\$PROMPT\""
+    CMD="python ../run.py --model \"\$MODEL\" --prompt \"\$PROMPT\""
     if [ -n "\$ADDITIONAL_ARGS" ]; then
         CMD="\$CMD \$ADDITIONAL_ARGS"
     fi
